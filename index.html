@@ -454,7 +454,7 @@
 
             const ammoType = document.getElementById('ammo-select').value;
             const options = objectTypes[ammoType];
-            
+
             const projectileMaterial = new THREE.MeshStandardMaterial({
                 color: options.color,
                 emissive: options.emissiveColor || 0x000000,
@@ -467,15 +467,37 @@
             const startPos = new THREE.Vector3(0, 0, -12.5);
             barrelGroup.localToWorld(startPos);
 
-            const fireDirection = new THREE.Vector3();
-            barrelGroup.getWorldDirection(fireDirection);
-            fireDirection.negate();
+            // Find nearest black hole
+            let targetBh = blackHoles[0];
+            let minDistSq = Infinity;
+            for (const bh of blackHoles) {
+                const distSq = bh.mesh.position.distanceToSquared(startPos);
+                if (distSq < minDistSq) {
+                    minDistSq = distSq;
+                    targetBh = bh;
+                }
+            }
+
+            // Direction toward black hole
+            const toBh = new THREE.Vector3().subVectors(targetBh.mesh.position, startPos).normalize();
+
+            // Generate a random perpendicular offset
+            const up = new THREE.Vector3(0, 1, 0);
+            let perp = new THREE.Vector3().crossVectors(toBh, up).normalize();
+            if (perp.lengthSq() < 0.01) {
+                perp = new THREE.Vector3(1, 0, 0); // fallback if parallel
+            }
+            perp.applyAxisAngle(toBh, Math.random() * Math.PI * 2); // randomize around the direction
+            perp.multiplyScalar(0.3 + Math.random() * 1.2); // random offset magnitude
+
+            // Final firing direction: toward BH + random side offset
+            const fireDirection = toBh.clone().add(perp).normalize();
 
             projectile.position.copy(startPos);
             scene.add(projectile);
 
             const velocity = fireDirection.clone().multiplyScalar(cannonPower);
-            
+
             const newId = `obj_${objectIdCounter++}`;
 
             if (options.isBlackHole) {
@@ -484,7 +506,7 @@
                 const newDisk = new THREE.Points(createDiskGeometry(options.radius + 2, 20, 0xcccccc, 0xaaaaaa), new THREE.PointsMaterial({ size: 0.3, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8, depthWrite: false }));
                 projectile.add(newDisk);
             } else {
-                 const obj = { 
+                const obj = { 
                     id: newId,
                     name: options.name,
                     mesh: projectile, 
@@ -494,7 +516,7 @@
                     options: options
                 };
                 celestialObjects.push(obj);
-                 if (options.isStar) {
+                if (options.isStar) {
                     const starLight = new THREE.PointLight(options.color, 2, 800);
                     obj.light = starLight;
                     projectile.add(starLight);
