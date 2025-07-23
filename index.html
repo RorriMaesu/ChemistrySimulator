@@ -23,7 +23,7 @@
         }
         .controls-panel {
             position: absolute;
-            background-color: rgba(17, 24, 39, 0.85);
+            background: linear-gradient(145deg, rgba(23, 30, 46, 0.85), rgba(10, 15, 25, 0.85));
             padding: 1rem;
             border-radius: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -188,12 +188,30 @@
     <div id="mobile-controls"><div id="joystick-move" class="joystick-container"><div class="joystick-handle"></div></div><div id="mobile-fire-button">FIRE</div><div id="joystick-aim" class="joystick-container"><div class="joystick-handle"></div></div></div>
     <div id="crosshair"></div>
 
-    <script type="importmap">{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js"}}</script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+            }
+        }
+    </script>
     <script type="module">
         import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
         const state = {isMobile: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent), cameraMode: 'cinematic', keyState: {}, gravityConstant: 1.0, lastGravityConstant: 1.0, cannonPower: 50, canFire: true, recoilOffset: 0, objectIdCounter: 0};
-        const objectTypes = {'small-planet': { name: 'Small Planet', radius: 1.5, color: 0x4a90e2, mass: 5 }, 'large-planet': { name: 'Large Planet', radius: 3, color: 0x7ed321, mass: 20 }, 'star': { name: 'Star', radius: 7, color: 0xffd700, mass: 200, isStar: true, emissiveColor: 0xffd700 }, 'dwarf-star': { name: 'Dwarf Star', radius: 4, color: 0xffffff, mass: 100, isStar: true, emissiveColor: 0xffffff }, 'black-hole': { name: 'Black Hole', radius: 5, color: 0x000000, mass: 50000, isBlackHole: true }};
+        const objectTypes = {
+            'small-planet': { name: 'Small Planet', radius: 1.5, color: 0x4a90e2, mass: 5, emissiveIntensity: 0.4 },
+            'large-planet': { name: 'Large Planet', radius: 3, color: 0x7ed321, mass: 20, emissiveIntensity: 0.4 },
+            'star': { name: 'Star', radius: 7, color: 0xffd700, mass: 200, isStar: true, emissiveIntensity: 1.2 },
+            'dwarf-star': { name: 'Dwarf Star', radius: 4, color: 0xffffff, mass: 100, isStar: true, emissiveIntensity: 1.0 },
+            'black-hole': { name: 'Black Hole', radius: 5, color: 0x000000, mass: 50000, isBlackHole: true, emissiveIntensity: 0 }
+        };
         let blackHoles = [], celestialObjects = [], whiteHoles = [], transitionQueue = [];
         
         const scene = new THREE.Scene();
@@ -209,8 +227,46 @@
         let activeCamera = cinematicCamera;
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-        scene.add(new THREE.PointLight(0xffffff, 2.5, 5000));
+        const pointLight = new THREE.PointLight(0xffffff, 2.5, 5000);
+        scene.add(pointLight);
 
+        // --- Selective Bloom Setup ---
+        const ENTIRE_SCENE = 0, BLOOM_SCENE = 1;
+        const bloomLayer = new THREE.Layers();
+        bloomLayer.set(BLOOM_SCENE);
+
+        const darkMaterial = new THREE.MeshBasicMaterial({ color: "black" });
+        const materials = {};
+
+        const renderPass = new RenderPass(scene, activeCamera);
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0;
+        bloomPass.strength = 0.8; // Adjusted strength for a subtle but colorful glow
+        bloomPass.radius = 0.2;   // Adjusted radius for a softer spread
+
+        const bloomComposer = new EffectComposer(renderer);
+        bloomComposer.renderToScreen = false;
+        bloomComposer.addPass(renderPass);
+        bloomComposer.addPass(bloomPass);
+
+        const finalPass = new ShaderPass(
+            new THREE.ShaderMaterial({
+                uniforms: {
+                    baseTexture: { value: null },
+                    bloomTexture: { value: bloomComposer.renderTarget2.texture }
+                },
+                vertexShader: document.getElementById('vertexshader')?.textContent,
+                fragmentShader: document.getElementById('fragmentshader')?.textContent,
+                defines: {}
+            }), "baseTexture"
+        );
+        finalPass.needsSwap = true;
+
+        const finalComposer = new EffectComposer(renderer);
+        finalComposer.addPass(renderPass);
+        finalComposer.addPass(finalPass);
+        
         function createDiskGeometry(innerRadius, outerRadius, color1, color2) {
             const diskParticles = 15000;
             const geometry = new THREE.BufferGeometry();
@@ -309,9 +365,17 @@
         function fireCannon() {
             if (!state.canFire) return;
             const options = objectTypes[ui.ammoSelect.value];
-            const projectileMaterial = new THREE.MeshStandardMaterial({color: options.color, emissive: options.emissiveColor || 0x000000, roughness: 0.8, metalness: 0.2, transparent: true});
+            const projectileMaterial = new THREE.MeshStandardMaterial({
+                color: options.color, 
+                emissive: options.color,
+                emissiveIntensity: options.emissiveIntensity,
+                roughness: 0.8, 
+                metalness: 0.2, 
+                transparent: true
+            });
             const projectile = new THREE.Mesh(new THREE.SphereGeometry(options.radius, 32, 32), projectileMaterial);
-            
+            projectile.layers.enable(BLOOM_SCENE);
+
             const startPos = new THREE.Vector3(0, 0, -12.5);
             barrelGroup.localToWorld(startPos);
             
@@ -324,7 +388,7 @@
                 const jitter = new THREE.Vector3( (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1 );
                 fireDirection = new THREE.Vector3().addVectors(aimDirection, jitter).normalize();
             } else { 
-                const targetBh = blackHoles[0]; // Always target the main SMBH
+                const targetBh = blackHoles[0];
                 const toBh = new THREE.Vector3().subVectors(targetBh.mesh.position, startPos).normalize();
                 const up = new THREE.Vector3(0, 1, 0);
                 let perp = new THREE.Vector3().crossVectors(toBh, up).normalize();
@@ -444,10 +508,12 @@
             const position = new THREE.Vector3(THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000));
             const whMesh = new THREE.Mesh(new THREE.SphereGeometry(15, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending }));
             whMesh.position.copy(position);
+            whMesh.layers.enable(BLOOM_SCENE);
             scene.add(whMesh);
             whiteHoles.push({ mesh: whMesh, lifetime: 2.0 });
-            const projectile = new THREE.Mesh(new THREE.SphereGeometry(objectData.radius, 32, 32), new THREE.MeshStandardMaterial({color: objectData.color, emissive: objectData.emissiveColor || 0x000000, roughness: 0.8, metalness: 0.2}));
+            const projectile = new THREE.Mesh(new THREE.SphereGeometry(objectData.radius, 32, 32), new THREE.MeshStandardMaterial({color: objectData.color, emissive: objectData.color, emissiveIntensity: objectData.emissiveIntensity, roughness: 0.8, metalness: 0.2}));
             projectile.position.copy(position);
+            projectile.layers.enable(BLOOM_SCENE);
             scene.add(projectile);
             const velocity = new THREE.Vector3().randomDirection().multiplyScalar(150);
             const obj = { id: `obj_${state.objectIdCounter++}`, name: objectData.name, mesh: projectile, velocity: velocity, mass: objectData.mass, originalColor: new THREE.Color(objectData.color), options: objectData };
@@ -524,6 +590,7 @@
                     ui.controlsInfoEl.textContent = 'Click simulation to aim.';
                 }
             }
+            renderPass.camera = activeCamera;
         }
 
         renderer.domElement.addEventListener('click', () => { if (!state.isMobile && state.cameraMode === 'cinematic') setCameraMode('aiming'); });
@@ -603,7 +670,23 @@
             cinematicCamera.aspect = aspect; cinematicCamera.updateProjectionMatrix();
             cannonCamera.aspect = aspect; cannonCamera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            bloomComposer.setSize(window.innerWidth, window.innerHeight);
+            finalComposer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        function darkenNonBloomed(obj) {
+            if ((obj.isMesh || obj.isPoints) && bloomLayer.test(obj.layers) === false) {
+                materials[obj.uuid] = obj.material;
+                obj.material = darkMaterial;
+            }
+        }
+        
+        function restoreMaterials(obj) {
+            if (materials[obj.uuid]) {
+                obj.material = materials[obj.uuid];
+                delete materials[obj.uuid];
+            }
+        }
 
         function animate() {
             requestAnimationFrame(animate);
@@ -625,7 +708,12 @@
                 if(state.cameraMode === 'aiming') updateTrajectory();
                 trajectoryLine.visible = state.cameraMode === 'aiming' && state.canFire;
             }
-            renderer.render(scene, activeCamera);
+
+            // Selective bloom rendering
+            scene.traverse(darkenNonBloomed);
+            bloomComposer.render();
+            scene.traverse(restoreMaterials);
+            finalComposer.render();
         }
         
         function updateCannon(delta) {
@@ -653,6 +741,21 @@
         updateMassEditor();
         updateAmmoUI();
         animate();
+    </script>
+    <script id="vertexshader" type="x-shader/x-vertex">
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }
+    </script>
+    <script id="fragmentshader" type="x-shader/x-fragment">
+        uniform sampler2D baseTexture;
+        uniform sampler2D bloomTexture;
+        varying vec2 vUv;
+        void main() {
+            gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
+        }
     </script>
 </body>
 </html>

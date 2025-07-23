@@ -41,3 +41,10 @@ MIT
 
 ---
 Created by [RorriMaesu](https://github.com/RorriMaesu)
+  
+## GitHub Pages
+This project is ready for GitHub Pages. After pushing to your repository, your site will be available at:
+```
+https://rorrimaesu.github.io/BlackHoleSimulatorGame/
+```
+Just open `index.html` in your browser, or visit the link above after enabling GitHub Pages in your repository settings.
