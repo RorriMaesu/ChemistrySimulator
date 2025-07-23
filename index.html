@@ -3,124 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Interactive Black Hole Sandbox</title>
+    <title>Interactive Cosmic Sandbox</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             overflow: hidden;
             background-color: #000000;
             font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
         }
         canvas {
             display: block;
-            cursor: pointer;
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: 100vw;
-            max-height: 100vh;
+            width: 100vw;
+            height: 100vh;
         }
         .controls-panel {
             position: absolute;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 16px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(17, 24, 39, 0.85);
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            transition: opacity 0.3s ease;
-            font-size: 1rem;
-        }
-        #main-controls {
-            top: 10px;
-            left: 10px;
-            max-width: 95vw;
-            width: 320px;
-        }
-        #gravity-menu {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 320px;
-            max-width: 95vw;
-            max-height: calc(100vh - 20px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+            max-height: calc(100vh - 2rem);
             display: flex;
             flex-direction: column;
         }
-        #gravity-menu-content {
-            overflow-y: auto;
-            padding-right: 10px;
+        #main-controls-container {
+            top: 1rem;
+            left: 1rem;
+            width: 320px;
+            max-width: calc(100vw - 2rem);
+            z-index: 10;
         }
-        #cannon-controls {
-            bottom: 10px;
+        #mass-editor-panel {
+            top: 1rem;
+            right: 1rem;
+            width: 320px;
+            max-width: calc(100vw - 2rem);
+            z-index: 10;
+        }
+        #mass-editor-content {
+            overflow-y: auto;
+            padding-right: 0.5rem; /* For scrollbar spacing */
+        }
+        #collapsible-controls {
+            max-height: 500px; /* Set a large max-height for open state and desktop */
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, margin-top 0.5s ease-in-out;
+        }
+        #mobile-controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #mobile-controls.visible {
+            opacity: 1;
+        }
+        .joystick-container {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            pointer-events: auto;
+        }
+        .joystick-handle {
+            width: 60px;
+            height: 60px;
+            position: absolute;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            width: 98vw;
-            max-width: 600px;
+            background-color: rgba(71, 85, 105, 0.7);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        #mobile-fire-button {
+            width: 80px;
+            height: 80px;
+            background-color: #ef4444;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .control-group {
-            margin-bottom: 10px;
-        }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-        input[type="range"] {
-            width: 100%;
-            cursor: pointer;
-        }
-        input[type="number"] {
-            appearance: textfield;
-            -moz-appearance: textfield;
-            font-size: 1rem;
-        }
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        button, select {
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background-color: #4a5568;
+            justify-content: center;
             color: white;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-            font-weight: 600;
-            font-size: 1rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.7);
+            pointer-events: auto;
+            transition: transform 0.1s;
         }
-        button:disabled {
-            background-color: #2d3748;
-            cursor: not-allowed;
-        }
-        button:hover, select:hover {
-            background-color: #718096;
-        }
-        button:active {
-            transform: scale(0.95);
-        }
-        #fire-btn {
-            background-color: #2b6cb0;
-            padding: 10px 20px;
-            flex-shrink: 0;
-        }
-        #fire-btn:hover {
-            background-color: #4299e1;
-        }
-        #clear-btn {
-            background-color: #c53030;
-        }
-        #clear-btn:hover {
-             background-color: #e53e3e;
+        #mobile-fire-button:active {
+            transform: scale(0.9);
         }
         #crosshair {
             position: absolute;
@@ -128,203 +120,96 @@
             left: 50%;
             width: 30px;
             height: 30px;
-            border: 2px solid rgba(0, 255, 136, 0.5);
+            border: 2px solid rgba(0, 255, 136, 0.7);
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            display: none; /* Hidden by default */
+            display: none;
+            z-index: 4;
         }
-        #ammo-card {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px 18px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1rem;
-            font-weight: 500;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-        }
-        #ammo-card.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        #ammo-color-preview {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-        @media (max-width: 600px) {
-            .controls-panel {
-                font-size: 0.95rem;
-                padding: 8px;
+        @media (max-width: 767px) {
+            #mass-editor-panel {
+                display: none; /* Hide mass editor on small screens for clarity */
             }
-            #main-controls, #gravity-menu {
-                width: 98vw;
-                max-width: 98vw;
-                left: 1vw;
-                right: 1vw;
-                top: 4px;
-            }
-            #cannon-controls {
-                width: 98vw;
-                max-width: 98vw;
-                left: 1vw;
-                bottom: 4px;
-                gap: 6px;
-            }
-            #ammo-card {
-                right: 1vw;
-                bottom: 4px;
-                font-size: 0.95rem;
-                padding: 8px 12px;
-            }
-            #ammo-color-preview {
-                width: 16px;
-                height: 16px;
+            #collapsible-controls.collapsed {
+                max-height: 0;
+                margin-top: 0 !important;
             }
         }
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="bg-black">
 
-    <div id="main-controls" class="controls-panel" tabindex="0">
-        <h1 class="text-xl font-bold mb-4">Cosmic Sandbox</h1>
-        <div class="control-group">
-            <label for="gravity-slider">Global Gravity Multiplier</label>
-            <div class="flex items-center gap-2">
-                <input type="range" id="gravity-slider" min="0.1" max="1000" step="0.1" value="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-                <input type="number" id="gravity-input" min="0.1" step="0.1" value="1" class="w-20 bg-gray-900 border border-gray-600 text-white rounded-md p-1 text-center">
+    <!-- Left Controls Panel -->
+    <div id="main-controls-container" class="controls-panel">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold">Cosmic Sandbox</h1>
+            <button id="toggle-controls-btn" class="md:hidden p-2 bg-gray-700 rounded-lg text-white font-semibold">Hide</button>
+        </div>
+        <div id="collapsible-controls" class="mt-4">
+            <div class="mb-3"><label for="gravity-slider" class="text-sm font-medium">Global Gravity</label><div class="flex items-center gap-2 mt-1"><input type="range" id="gravity-slider" min="0.1" max="1000" step="0.1" value="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"><input type="number" id="gravity-input" min="0.1" step="0.1" value="1" class="w-20 bg-gray-800 border border-gray-600 text-white rounded-md p-1 text-center"></div></div>
+            
+            <!-- Projectile Selection -->
+            <div class="mb-3">
+                <label class="text-sm font-medium">Projectile Type</label>
+                <!-- Mobile Selector -->
+                <div class="md:hidden flex items-center justify-between mt-1">
+                    <button id="prev-ammo-btn" class="px-4 py-2 bg-gray-700 rounded-lg text-lg font-bold">&lt;</button>
+                    <span id="current-ammo-name" class="font-semibold text-center text-lg mx-2">Small Planet</span>
+                    <button id="next-ammo-btn" class="px-4 py-2 bg-gray-700 rounded-lg text-lg font-bold">&gt;</button>
+                </div>
+                <!-- Desktop Selector -->
+                <select id="ammo-select" class="w-full mt-1 p-2 bg-gray-800 border border-gray-600 rounded-md hidden md:block">
+                    <option value="small-planet">Small Planet</option>
+                    <option value="large-planet">Large Planet</option>
+                    <option value="star">Star</option>
+                    <option value="dwarf-star">Dwarf Star</option>
+                    <option value="black-hole">Black Hole</option>
+                </select>
             </div>
+
+            <div class="mb-4"><label for="power-slider" class="text-sm font-medium">Launch Power</label><div class="flex items-center gap-2 mt-1"><input type="range" id="power-slider" min="10" max="1000" step="1" value="50" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"><input type="number" id="power-input" min="10" step="1" value="50" class="w-20 bg-gray-800 border border-gray-600 text-white rounded-md p-1 text-center"></div></div>
+            <p id="object-count-info" class="text-xs text-gray-400 mt-3">Objects: 0</p>
+            <p id="controls-info" class="text-xs text-gray-400 mt-1">Click simulation to aim.</p>
         </div>
-        <div class="control-group">
-             <label>Actions</label>
-             <div class="flex flex-col gap-2">
-                <button id="clear-btn" class="w-full">Clear Scene</button>
-             </div>
+        <div class="flex flex-col md:flex-row gap-2 mt-4 pt-4 border-t border-gray-700">
+            <button id="toggle-aim-mode-btn" class="md:hidden w-full p-2 bg-blue-600 rounded-lg text-white font-semibold">Aim</button>
+            <button id="main-fire-btn" class="w-full p-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-colors">FIRE</button>
+            <button id="clear-btn" class="w-full p-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors">Clear Scene</button>
         </div>
-        <p id="object-count-info" class="text-sm text-gray-300 mt-2">Objects in scene: 0</p>
-        <p id="controls-info" class="text-xs text-gray-400 mt-4">Click simulation to aim & move cannon</p>
     </div>
 
-    <div id="gravity-menu" class="controls-panel" tabindex="0">
-        <h2 class="text-lg font-bold mb-2">Object Mass Editor</h2>
-        <div id="gravity-menu-content" class="flex-grow">
-            <!-- Dynamic content goes here -->
-        </div>
-    </div>
-    
-    <div id="cannon-controls" class="controls-panel" tabindex="0">
-        <div class="flex-grow">
-            <label for="ammo-select">Ammo Type</label>
-            <select id="ammo-select" class="w-full">
-                <option value="small-planet">Small Planet</option>
-                <option value="large-planet">Large Planet</option>
-                <option value="star">Star</option>
-                <option value="dwarf-star">Dwarf Star</option>
-                <option value="black-hole">Black Hole</option>
-            </select>
-        </div>
-        <div class="flex-grow">
-            <label for="power-slider">Power</label>
-            <div class="flex items-center gap-2">
-                <input type="range" id="power-slider" min="10" max="1000" step="1" value="50" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-                <input type="number" id="power-input" min="10" step="1" value="50" class="w-20 bg-gray-900 border border-gray-600 text-white rounded-md p-1 text-center">
-            </div>
-        </div>
-        <button id="fire-btn">FIRE</button>
+    <!-- Right Mass Editor Panel -->
+    <div id="mass-editor-panel" class="controls-panel">
+        <h2 class="text-lg font-bold mb-2 flex-shrink-0">Object Mass Editor</h2>
+        <div id="mass-editor-content" class="flex-grow"></div>
     </div>
 
+    <!-- Mobile-only On-Screen Controls -->
+    <div id="mobile-controls"><div id="joystick-move" class="joystick-container"><div class="joystick-handle"></div></div><div id="mobile-fire-button">FIRE</div><div id="joystick-aim" class="joystick-container"><div class="joystick-handle"></div></div></div>
     <div id="crosshair"></div>
 
-    <div id="ammo-card">
-        <div id="ammo-color-preview"></div>
-        <span id="ammo-name"></span>
-    </div>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
-            }
-        }
-    </script>
-
+    <script type="importmap">{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js"}}</script>
     <script type="module">
         import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- RENDER & SCENE SETUP ---
-        let cameraMode = 'cinematic'; // 'cinematic', 'aiming'
-        const scene = new THREE.Scene();
-        const cinematicCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-        cinematicCamera.position.set(0, 150, 600);
-        const cannonCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+        const state = {isMobile: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent), cameraMode: 'cinematic', keyState: {}, gravityConstant: 1.0, lastGravityConstant: 1.0, cannonPower: 50, canFire: true, recoilOffset: 0, objectIdCounter: 0};
+        const objectTypes = {'small-planet': { name: 'Small Planet', radius: 1.5, color: 0x4a90e2, mass: 5 }, 'large-planet': { name: 'Large Planet', radius: 3, color: 0x7ed321, mass: 20 }, 'star': { name: 'Star', radius: 7, color: 0xffd700, mass: 200, isStar: true, emissiveColor: 0xffd700 }, 'dwarf-star': { name: 'Dwarf Star', radius: 4, color: 0xffffff, mass: 100, isStar: true, emissiveColor: 0xffffff }, 'black-hole': { name: 'Black Hole', radius: 5, color: 0x000000, mass: 50000, isBlackHole: true }};
+        let blackHoles = [], celestialObjects = [], whiteHoles = [], transitionQueue = [];
         
-        let activeCamera = cinematicCamera;
-        let trajectoryLine;
-
+        const scene = new THREE.Scene();
+        const clock = new THREE.Clock();
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // --- CONTROLS ---
-        const keyState = {};
-        const orbitControls = new OrbitControls(cinematicCamera, renderer.domElement);
-        orbitControls.enableDamping = true;
-        orbitControls.dampingFactor = 0.05;
-        orbitControls.minDistance = 20;
-        orbitControls.maxDistance = 2000;
-        orbitControls.target.set(0, 0, 0);
-        orbitControls.enabled = false;
+        const cinematicCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+        cinematicCamera.position.set(0, 150, 600);
+        const cannonCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+        let activeCamera = cinematicCamera;
 
-        // --- LIGHTING ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-        scene.add(ambientLight);
-        const pointLight = new THREE.PointLight(0xffffff, 2.5, 5000);
-        scene.add(pointLight);
-
-        // --- BLACK HOLE & STARFIELD ---
-        let gravityConstant = 1.0;
-        let lastGravityConstant = 1.0;
-        let blackHoles = [];
-        let celestialObjects = [];
-        let whiteHoles = [];
-        let transitionQueue = [];
-
-        const smbhMass = 500000;
-        const smbhRadius = 25;
-        const smbh = new THREE.Mesh(new THREE.SphereGeometry(smbhRadius, 64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-        const smbhAccretionDisk = new THREE.Points(createDiskGeometry(smbhRadius + 10, 120, 0xffa500, 0x8B0000), new THREE.PointsMaterial({ size: 0.8, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false }));
-        smbh.add(smbhAccretionDisk);
-        scene.add(smbh);
-        blackHoles.push({ id: 'smbh', name: 'Supermassive BH', mesh: smbh, mass: smbhMass, radius: smbhRadius, velocity: new THREE.Vector3() });
-
-        const orbitingBhMass = 100000;
-        const orbitingBhRadius = 10;
-        const orbitingBh = new THREE.Mesh(new THREE.SphereGeometry(orbitingBhRadius, 64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-        const orbitingBhAccretionDisk = new THREE.Points(createDiskGeometry(orbitingBhRadius + 5, 60, 0x00aaff, 0xff6600), new THREE.PointsMaterial({ size: 0.5, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8, depthWrite: false }));
-        orbitingBh.add(orbitingBhAccretionDisk);
-        orbitingBh.position.set(400, 0, 0);
-        scene.add(orbitingBh);
-        const orbitalVelocity = Math.sqrt((gravityConstant * smbhMass) / 400);
-        blackHoles.push({ id: 'orbiting_bh', name: 'Orbiting BH', mesh: orbitingBh, mass: orbitingBhMass, radius: orbitingBhRadius, velocity: new THREE.Vector3(0, 0, -orbitalVelocity) });
-
-        const starfield = new THREE.Points(createStarfieldGeometry(), new THREE.PointsMaterial({ color: 0xffffff, size: 0.7 }));
-        scene.add(starfield);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+        scene.add(new THREE.PointLight(0xffffff, 2.5, 5000));
 
         function createDiskGeometry(innerRadius, outerRadius, color1, color2) {
             const diskParticles = 15000;
@@ -341,14 +226,29 @@
                 positions[i * 3 + 2] = Math.sin(angle) * distance;
                 const lerpFactor = (distance - innerRadius) / (outerRadius - innerRadius);
                 const color = new THREE.Color().lerpColors(colorInside, colorOutside, lerpFactor);
-                colors[i * 3] = color.r;
-                colors[i * 3 + 1] = color.g;
-                colors[i * 3 + 2] = color.b;
+                colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
             }
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
             return geometry;
         }
+
+        const smbh = new THREE.Mesh(new THREE.SphereGeometry(25, 64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+        const smbhAccretionDisk = new THREE.Points(createDiskGeometry(35, 120, 0xffa500, 0x8B0000), new THREE.PointsMaterial({ size: 0.8, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false }));
+        smbh.add(smbhAccretionDisk);
+        scene.add(smbh);
+        blackHoles.push({ id: 'smbh', name: 'Supermassive BH', mesh: smbh, mass: 500000, radius: 25, velocity: new THREE.Vector3() });
+
+        const orbitingBh = new THREE.Mesh(new THREE.SphereGeometry(10, 64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+        const orbitingBhAccretionDisk = new THREE.Points(createDiskGeometry(15, 60, 0x00aaff, 0xff6600), new THREE.PointsMaterial({ size: 0.5, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8, depthWrite: false }));
+        orbitingBh.add(orbitingBhAccretionDisk);
+        orbitingBh.position.set(400, 0, 0);
+        scene.add(orbitingBh);
+        const orbitalVelocity = Math.sqrt((state.gravityConstant * 500000) / 400);
+        blackHoles.push({ id: 'orbiting_bh', name: 'Orbiting BH', mesh: orbitingBh, mass: 100000, radius: 10, velocity: new THREE.Vector3(0, 0, -orbitalVelocity) });
+
+        const starfield = new THREE.Points(createStarfieldGeometry(), new THREE.PointsMaterial({ color: 0xffffff, size: 0.7 }));
+        scene.add(starfield);
 
         function createStarfieldGeometry() {
             const starGeometry = new THREE.BufferGeometry();
@@ -360,145 +260,84 @@
             return starGeometry;
         }
 
-        // --- CANNON, HUD & AMMO ---
-        const objectTypes = {
-            'small-planet': { name: 'Small Planet', radius: 1.5, color: 0x4a90e2, mass: 5 },
-            'large-planet': { name: 'Large Planet', radius: 3, color: 0x7ed321, mass: 20 },
-            'star': { name: 'Star', radius: 7, color: 0xffd700, mass: 200, isStar: true, emissiveColor: 0xffd700 },
-            'dwarf-star': { name: 'Dwarf Star', radius: 4, color: 0xffffff, mass: 100, isStar: true, emissiveColor: 0xffffff },
-            'black-hole': { name: 'Black Hole', radius: 5, color: 0x000000, mass: 50000, isBlackHole: true }
-        };
-        let canFire = true;
-        let recoilOffset = 0;
-        let objectIdCounter = 0;
-
         const cannon = new THREE.Group();
-        const cannonBase = new THREE.Mesh(new THREE.CylinderGeometry(8, 10, 5, 16), new THREE.MeshStandardMaterial({ color: 0x444455, roughness: 0.6, metalness: 0.8 }));
-        cannonBase.position.y = -2.5;
-        
-        const cannonBarrel = new THREE.Mesh(new THREE.CylinderGeometry(3, 2.5, 25, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0x666677, roughness: 0.5, metalness: 0.9, side: THREE.DoubleSide }));
+        const cannonBarrel = new THREE.Mesh(new THREE.CylinderGeometry(3, 2.5, 25, 12), new THREE.MeshStandardMaterial({ color: 0x666677, roughness: 0.5, metalness: 0.9 }));
         cannonBarrel.rotation.x = Math.PI / 2;
-        
         const barrelGroup = new THREE.Group();
         barrelGroup.add(cannonBarrel);
         barrelGroup.position.y = 5;
-        
-        const cannonSpotlight = new THREE.SpotLight(0xffffff, 5, 1000, Math.PI / 12, 0.5, 1);
-        cannonSpotlight.position.set(0, 0, -10);
-        barrelGroup.add(cannonSpotlight);
-        
-        cannon.add(cannonBase, barrelGroup);
+        cannon.add(new THREE.Mesh(new THREE.CylinderGeometry(8, 10, 5, 16), new THREE.MeshStandardMaterial({ color: 0x444455, roughness: 0.6, metalness: 0.8 })), barrelGroup);
         cannon.position.set(0, -20, 550);
         scene.add(cannon);
-
-        cannonCamera.position.set(0, 3.5, 12);
         barrelGroup.add(cannonCamera);
+        cannonCamera.position.set(0, 3.5, 12);
 
-        let cannonPower = 50;
-        let cannonYaw = 0;
-        let cannonPitch = 0;
-
-        // --- TRAJECTORY PREDICTION ---
-        trajectoryLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.7 }));
+        const trajectoryLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.7 }));
         trajectoryLine.frustumCulled = false;
         scene.add(trajectoryLine);
 
         function updateTrajectory() {
             const points = [];
-            const steps = 200;
-            const timeStep = 0.5;
-            
+            const steps = 200, timeStep = 0.5;
             const startPos = new THREE.Vector3(0, 0, -12.5);
             barrelGroup.localToWorld(startPos);
-
             const fireDirection = new THREE.Vector3();
             barrelGroup.getWorldDirection(fireDirection);
             fireDirection.negate();
-
-            const startVel = fireDirection.clone().multiplyScalar(cannonPower);
-
+            const startVel = fireDirection.clone().multiplyScalar(state.cannonPower);
             let currentPos = startPos.clone();
             let currentVel = startVel.clone();
-            
-            const ammoType = document.getElementById('ammo-select').value;
-            const mass = objectTypes[ammoType].mass;
-
+            const mass = objectTypes[ui.ammoSelect.value].mass;
             for (let i = 0; i < steps; i++) {
                 let totalForce = new THREE.Vector3();
                 for (const bh of blackHoles) {
                     const distanceVec = new THREE.Vector3().subVectors(bh.mesh.position, currentPos);
                     const distanceSq = distanceVec.lengthSq();
-                     if (distanceSq < bh.radius * bh.radius) {
-                        totalForce.set(0,0,0);
-                        break;
-                    }
-                    const forceMagnitude = (gravityConstant * bh.mass * mass) / distanceSq;
+                    if (distanceSq < bh.radius * bh.radius) { totalForce.set(0,0,0); break; }
+                    const forceMagnitude = (state.gravityConstant * bh.mass * mass) / distanceSq;
                     totalForce.add(distanceVec.normalize().multiplyScalar(forceMagnitude));
                 }
-
                 if (totalForce.lengthSq() === 0) break;
-
                 const acceleration = totalForce.divideScalar(mass);
                 currentVel.add(acceleration.multiplyScalar(timeStep));
                 currentPos.add(currentVel.clone().multiplyScalar(timeStep));
                 points.push(currentPos.clone());
             }
-
             trajectoryLine.geometry.setFromPoints(points);
-            trajectoryLine.geometry.attributes.position.needsUpdate = true;
         }
-        
-        // --- PHYSICS & OBJECTS ---
+
         function fireCannon() {
-            if (!canFire) return;
-
-            const ammoType = document.getElementById('ammo-select').value;
-            const options = objectTypes[ammoType];
-
-            const projectileMaterial = new THREE.MeshStandardMaterial({
-                color: options.color,
-                emissive: options.emissiveColor || 0x000000,
-                roughness: 0.8,
-                metalness: 0.2,
-                transparent: true
-            });
+            if (!state.canFire) return;
+            const options = objectTypes[ui.ammoSelect.value];
+            const projectileMaterial = new THREE.MeshStandardMaterial({color: options.color, emissive: options.emissiveColor || 0x000000, roughness: 0.8, metalness: 0.2, transparent: true});
             const projectile = new THREE.Mesh(new THREE.SphereGeometry(options.radius, 32, 32), projectileMaterial);
-
+            
             const startPos = new THREE.Vector3(0, 0, -12.5);
             barrelGroup.localToWorld(startPos);
+            
+            let fireDirection;
 
-            // Find nearest black hole
-            let targetBh = blackHoles[0];
-            let minDistSq = Infinity;
-            for (const bh of blackHoles) {
-                const distSq = bh.mesh.position.distanceToSquared(startPos);
-                if (distSq < minDistSq) {
-                    minDistSq = distSq;
-                    targetBh = bh;
-                }
+            if (state.cameraMode === 'aiming') {
+                const aimDirection = new THREE.Vector3();
+                barrelGroup.getWorldDirection(aimDirection);
+                aimDirection.negate();
+                const jitter = new THREE.Vector3( (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1 );
+                fireDirection = new THREE.Vector3().addVectors(aimDirection, jitter).normalize();
+            } else { 
+                const targetBh = blackHoles[0]; // Always target the main SMBH
+                const toBh = new THREE.Vector3().subVectors(targetBh.mesh.position, startPos).normalize();
+                const up = new THREE.Vector3(0, 1, 0);
+                let perp = new THREE.Vector3().crossVectors(toBh, up).normalize();
+                if (perp.lengthSq() < 0.01) { perp.set(1, 0, 0); }
+                perp.applyAxisAngle(toBh, Math.random() * Math.PI * 2);
+                perp.multiplyScalar(0.3 + Math.random() * 1.2);
+                fireDirection = toBh.clone().add(perp).normalize();
             }
-
-            // Direction toward black hole
-            const toBh = new THREE.Vector3().subVectors(targetBh.mesh.position, startPos).normalize();
-
-            // Generate a random perpendicular offset
-            const up = new THREE.Vector3(0, 1, 0);
-            let perp = new THREE.Vector3().crossVectors(toBh, up).normalize();
-            if (perp.lengthSq() < 0.01) {
-                perp = new THREE.Vector3(1, 0, 0); // fallback if parallel
-            }
-            perp.applyAxisAngle(toBh, Math.random() * Math.PI * 2); // randomize around the direction
-            perp.multiplyScalar(0.3 + Math.random() * 1.2); // random offset magnitude
-
-            // Final firing direction: toward BH + random side offset
-            const fireDirection = toBh.clone().add(perp).normalize();
 
             projectile.position.copy(startPos);
             scene.add(projectile);
-
-            const velocity = fireDirection.clone().multiplyScalar(cannonPower);
-
-            const newId = `obj_${objectIdCounter++}`;
+            const velocity = fireDirection.clone().multiplyScalar(state.cannonPower);
+            const newId = `obj_${state.objectIdCounter++}`;
 
             if (options.isBlackHole) {
                 const newBh = { id: newId, name: 'Fired BH', mesh: projectile, mass: options.mass, radius: options.radius, velocity: velocity };
@@ -506,15 +345,7 @@
                 const newDisk = new THREE.Points(createDiskGeometry(options.radius + 2, 20, 0xcccccc, 0xaaaaaa), new THREE.PointsMaterial({ size: 0.3, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8, depthWrite: false }));
                 projectile.add(newDisk);
             } else {
-                const obj = { 
-                    id: newId,
-                    name: options.name,
-                    mesh: projectile, 
-                    velocity: velocity, 
-                    mass: options.mass,
-                    originalColor: new THREE.Color(options.color),
-                    options: options
-                };
+                const obj = { id: newId, name: options.name, mesh: projectile, velocity: velocity, mass: options.mass, originalColor: new THREE.Color(options.color), options: options };
                 celestialObjects.push(obj);
                 if (options.isStar) {
                     const starLight = new THREE.PointLight(options.color, 2, 800);
@@ -523,444 +354,304 @@
                 }
             }
             updateObjectCount();
-            updateGravityMenu();
-
-            canFire = false;
-            recoilOffset = 3; 
-
-            setTimeout(() => { canFire = true; }, 300);
+            updateMassEditor();
+            state.canFire = false;
+            state.recoilOffset = 3; 
+            setTimeout(() => { state.canFire = true; }, 300);
         }
         
         function updatePhysics(delta) {
-            // Update black holes first
             for (let i = blackHoles.length - 1; i >= 0; i--) {
                 const bh1 = blackHoles[i];
-                if (i === 0) continue; 
-
                 let totalForce = new THREE.Vector3();
-                for (let j = blackHoles.length - 1; j >= 0; j--) {
+                for (let j = 0; j < blackHoles.length; j++) {
                     if (i === j) continue;
                     const bh2 = blackHoles[j];
                     const distanceVec = new THREE.Vector3().subVectors(bh2.mesh.position, bh1.mesh.position);
                     const distanceSq = distanceVec.lengthSq();
-                    
                     if (distanceSq < (bh1.radius + bh2.radius) * (bh1.radius + bh2.radius)) {
-                        const bigger = bh1.mass > bh2.mass ? bh1 : bh2;
-                        const smaller = bh1.mass > bh2.mass ? bh2 : bh1;
-                        
+                        const bigger = bh1.mass > bh2.mass ? bh1 : bh2; const smaller = bh1.mass > bh2.mass ? bh2 : bh1;
                         const combinedMomentum = new THREE.Vector3().addScaledVector(bigger.velocity, bigger.mass).addScaledVector(smaller.velocity, smaller.mass);
-                        
-                        bigger.mass += smaller.mass;
-                        bigger.velocity = combinedMomentum.divideScalar(bigger.mass);
-                        
+                        bigger.mass += smaller.mass; bigger.velocity = combinedMomentum.divideScalar(bigger.mass);
                         const scaleFactor = Math.cbrt(bigger.mass / (bigger.mass - smaller.mass));
-                        bigger.radius *= scaleFactor;
-                        bigger.mesh.scale.multiplyScalar(scaleFactor);
-                        
+                        bigger.radius *= scaleFactor; bigger.mesh.scale.multiplyScalar(scaleFactor);
                         scene.remove(smaller.mesh);
                         const removedIndex = blackHoles.findIndex(bh => bh.id === smaller.id);
-                        if (removedIndex > -1) {
-                            blackHoles.splice(removedIndex, 1);
-                        }
+                        if (removedIndex > -1) blackHoles.splice(removedIndex, 1);
                         if (j < i) i--;
-                        updateGravityMenu();
-                        continue;
+                        updateMassEditor(); continue;
                     }
-
-                    const forceMagnitude = (gravityConstant * bh1.mass * bh2.mass) / distanceSq;
+                    const forceMagnitude = (state.gravityConstant * bh1.mass * bh2.mass) / distanceSq;
                     totalForce.add(distanceVec.normalize().multiplyScalar(forceMagnitude));
                 }
                 const acceleration = totalForce.divideScalar(bh1.mass);
                 bh1.velocity.add(acceleration.multiplyScalar(delta));
-                bh1.mesh.position.add(bh1.velocity.clone().multiplyScalar(delta));
+            }
+            for (const bh of blackHoles) {
+                if (bh.id !== 'smbh') bh.mesh.position.add(bh.velocity.clone().multiplyScalar(delta));
             }
 
-
-            // Update celestial objects
             const redColor = new THREE.Color(0xff0000);
             for (let i = celestialObjects.length - 1; i >= 0; i--) {
                 const obj = celestialObjects[i];
-                let totalForce = new THREE.Vector3();
-                let closestBh = null;
-                let closestDistSq = Infinity;
-
+                let totalForce = new THREE.Vector3(), closestBh = null, closestDistSq = Infinity;
                 for (const bh of blackHoles) {
                     const distanceVec = new THREE.Vector3().subVectors(bh.mesh.position, obj.mesh.position);
                     const distanceSq = distanceVec.lengthSq();
-                    const forceMagnitude = (gravityConstant * bh.mass * obj.mass) / distanceSq;
+                    const forceMagnitude = (state.gravityConstant * bh.mass * obj.mass) / distanceSq;
                     totalForce.add(distanceVec.clone().normalize().multiplyScalar(forceMagnitude));
-
-                    if (distanceSq < closestDistSq) {
-                        closestDistSq = distanceSq;
-                        closestBh = bh;
-                    }
+                    if (distanceSq < closestDistSq) { closestDistSq = distanceSq; closestBh = bh; }
                 }
                 
-                const finalPlungeStartDistSq = (closestBh.radius * 3) * (closestBh.radius * 3);
-                if (closestDistSq < finalPlungeStartDistSq) {
-                    const finalPlungeFactor = 1 - ((closestDistSq - (closestBh.radius*closestBh.radius)) / (finalPlungeStartDistSq - (closestBh.radius*closestBh.radius)));
-                    const clampedFactor = Math.min(1, Math.max(0, finalPlungeFactor));
-
+                const plungeStartDistSq = (closestBh.radius * 3) * (closestBh.radius * 3);
+                if (closestDistSq < plungeStartDistSq) {
+                    const plungeFactor = 1 - ((closestDistSq - (closestBh.radius*closestBh.radius)) / (plungeStartDistSq - (closestBh.radius*closestBh.radius)));
+                    const clampedFactor = Math.min(1, Math.max(0, plungeFactor));
                     obj.mesh.lookAt(closestBh.mesh.position);
-                    const stretch = 1 + clampedFactor * 15;
-                    const squash = Math.max(0.01, 1 - clampedFactor * 0.9);
+                    const stretch = 1 + clampedFactor * 15, squash = Math.max(0.01, 1 - clampedFactor * 0.9);
                     obj.mesh.scale.set(squash, stretch, squash);
                     obj.mesh.material.color.lerpColors(obj.originalColor, redColor, clampedFactor * 0.8);
                     obj.mesh.material.opacity = 1 - clampedFactor;
-
                     if (clampedFactor > 0.99) {
                         transitionQueue.push({ objectData: obj.options, entryTime: clock.getElapsedTime() });
                         if (obj.light) obj.mesh.remove(obj.light);
                         scene.remove(obj.mesh);
-                        obj.mesh.geometry.dispose();
-                        obj.mesh.material.dispose();
                         celestialObjects.splice(i, 1);
-                        updateObjectCount();
-                        updateGravityMenu();
-                        continue;
+                        updateObjectCount(); updateMassEditor(); continue;
                     }
                 }
-
                 const acceleration = totalForce.divideScalar(obj.mass);
                 obj.velocity.add(acceleration.multiplyScalar(delta));
                 obj.mesh.position.add(obj.velocity.clone().multiplyScalar(delta));
             }
 
-            // Process wormhole transitions
             for (let i = transitionQueue.length - 1; i >= 0; i--) {
                 const item = transitionQueue[i];
-                if (clock.getElapsedTime() - item.entryTime > 2) { // 2-second delay
+                if (clock.getElapsedTime() - item.entryTime > 2) {
                     createWhiteHole(item.objectData);
                     transitionQueue.splice(i, 1);
                 }
             }
-
-            // Update white holes
             for (let i = whiteHoles.length - 1; i >= 0; i--) {
                 const wh = whiteHoles[i];
                 wh.lifetime -= delta;
-                wh.mesh.material.opacity = Math.max(0, wh.lifetime / 2); // Fade out over 2 seconds
-                if (wh.lifetime <= 0) {
-                    scene.remove(wh.mesh);
-                    whiteHoles.splice(i, 1);
-                }
+                wh.mesh.material.opacity = Math.max(0, wh.lifetime / 2);
+                if (wh.lifetime <= 0) { scene.remove(wh.mesh); whiteHoles.splice(i, 1); }
             }
         }
 
         function createWhiteHole(objectData) {
-            const position = new THREE.Vector3(
-                THREE.MathUtils.randFloatSpread(1000),
-                THREE.MathUtils.randFloatSpread(1000),
-                THREE.MathUtils.randFloatSpread(1000)
-            );
-
-            const whMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending });
-            const whMesh = new THREE.Mesh(new THREE.SphereGeometry(15, 32, 32), whMaterial);
+            const position = new THREE.Vector3(THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000));
+            const whMesh = new THREE.Mesh(new THREE.SphereGeometry(15, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending }));
             whMesh.position.copy(position);
             scene.add(whMesh);
             whiteHoles.push({ mesh: whMesh, lifetime: 2.0 });
-
-            // Eject object
-            const projectileMaterial = new THREE.MeshStandardMaterial({
-                color: objectData.color,
-                emissive: objectData.emissiveColor || 0x000000,
-                roughness: 0.8,
-                metalness: 0.2,
-            });
-            const projectile = new THREE.Mesh(new THREE.SphereGeometry(objectData.radius, 32, 32), projectileMaterial);
+            const projectile = new THREE.Mesh(new THREE.SphereGeometry(objectData.radius, 32, 32), new THREE.MeshStandardMaterial({color: objectData.color, emissive: objectData.emissiveColor || 0x000000, roughness: 0.8, metalness: 0.2}));
             projectile.position.copy(position);
             scene.add(projectile);
-
-            const velocity = new THREE.Vector3().randomDirection().multiplyScalar(150); // High ejection speed
-            const obj = { 
-                id: `obj_${objectIdCounter++}`,
-                name: objectData.name,
-                mesh: projectile, 
-                velocity: velocity, 
-                mass: objectData.mass,
-                originalColor: new THREE.Color(objectData.color),
-                options: objectData
-            };
+            const velocity = new THREE.Vector3().randomDirection().multiplyScalar(150);
+            const obj = { id: `obj_${state.objectIdCounter++}`, name: objectData.name, mesh: projectile, velocity: velocity, mass: objectData.mass, originalColor: new THREE.Color(objectData.color), options: objectData };
             celestialObjects.push(obj);
             if (objectData.isStar) {
                 const starLight = new THREE.PointLight(objectData.color, 2, 800);
                 obj.light = starLight;
                 projectile.add(starLight);
             }
-            updateObjectCount();
-            updateGravityMenu();
+            updateObjectCount(); updateMassEditor();
         }
 
-        // --- UI & EVENT LISTENERS ---
-        const gravitySlider = document.getElementById('gravity-slider');
-        const gravityInput = document.getElementById('gravity-input');
-        const objectCountEl = document.getElementById('object-count-info');
-        const powerSlider = document.getElementById('power-slider');
-        const powerInput = document.getElementById('power-input');
-        const crosshair = document.getElementById('crosshair');
-        const controlsInfo = document.getElementById('controls-info');
-        const ammoSelect = document.getElementById('ammo-select');
-        const fireButton = document.getElementById('fire-btn');
-        const ammoCard = document.getElementById('ammo-card');
-        const ammoNameEl = document.getElementById('ammo-name');
-        const ammoColorPreviewEl = document.getElementById('ammo-color-preview');
-        const gravityMenuContent = document.getElementById('gravity-menu-content');
-        
-        function updateAmmoUI() {
-            const ammoType = ammoSelect.value;
-            const options = objectTypes[ammoType];
-            if (ammoNameEl) {
-                ammoNameEl.textContent = options.name;
-            }
-            if (ammoColorPreviewEl) {
-                ammoColorPreviewEl.style.backgroundColor = `#${new THREE.Color(options.color).getHexString()}`;
-            }
-            if (ammoCard) {
-                ammoCard.classList.remove('visible');
-                setTimeout(() => {
-                    if (cameraMode === 'aiming') ammoCard.classList.add('visible');
-                }, 50);
-            }
-        }
+        const ui = {
+            gravitySlider: document.getElementById('gravity-slider'), gravityInput: document.getElementById('gravity-input'),
+            powerSlider: document.getElementById('power-slider'), powerInput: document.getElementById('power-input'),
+            ammoSelect: document.getElementById('ammo-select'), objectCountEl: document.getElementById('object-count-info'),
+            controlsInfoEl: document.getElementById('controls-info'), crosshair: document.getElementById('crosshair'),
+            mainControls: document.getElementById('main-controls-container'), mobileControls: document.getElementById('mobile-controls'),
+            toggleAimBtn: document.getElementById('toggle-aim-mode-btn'), massEditorContent: document.getElementById('mass-editor-content'),
+            toggleControlsBtn: document.getElementById('toggle-controls-btn'), collapsibleControls: document.getElementById('collapsible-controls'),
+            prevAmmoBtn: document.getElementById('prev-ammo-btn'), nextAmmoBtn: document.getElementById('next-ammo-btn'),
+            currentAmmoName: document.getElementById('current-ammo-name'),
+            mainFireBtn: document.getElementById('main-fire-btn')
+        };
 
-        function updateGravityMenu() {
-            gravityMenuContent.innerHTML = '';
+        function updateObjectCount() { ui.objectCountEl.textContent = `Objects: ${(celestialObjects.length + blackHoles.length - 2)}`; }
+
+        function updateMassEditor() {
+            if (state.isMobile) return;
+            ui.massEditorContent.innerHTML = '';
             const allObjects = [...blackHoles, ...celestialObjects];
-            allObjects.forEach((obj, index) => {
-                const li = document.createElement('li');
-                li.className = 'flex items-center justify-between mb-2';
-                
+            allObjects.forEach(obj => {
+                const li = document.createElement('div');
+                li.className = 'flex items-center justify-between mb-2 text-sm';
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = `${obj.name} ${obj.id.startsWith('obj_') ? obj.id.split('_')[1] : ''}`;
-                li.appendChild(nameSpan);
-
                 const massInput = document.createElement('input');
                 massInput.type = 'number';
                 massInput.value = obj.mass.toFixed(0);
-                massInput.className = 'w-24 bg-gray-900 border border-gray-600 text-white rounded-md p-1 text-center';
-                massInput.addEventListener('input', (e) => {
+                massInput.className = 'w-24 bg-gray-800 border border-gray-600 text-white rounded-md p-1 text-center';
+                massInput.addEventListener('change', (e) => {
                     const newMass = parseFloat(e.target.value);
-                    if (!isNaN(newMass) && newMass > 0) {
-                        obj.mass = newMass;
-                    }
+                    if (!isNaN(newMass) && newMass > 0) obj.mass = newMass;
                 });
-                li.appendChild(massInput);
-                gravityMenuContent.appendChild(li);
+                li.appendChild(nameSpan); li.appendChild(massInput);
+                ui.massEditorContent.appendChild(li);
             });
         }
 
-        function updateGravity(newGravity) {
-            if (lastGravityConstant <= 0) lastGravityConstant = 0.1;
-            const scaleFactor = Math.sqrt(newGravity / lastGravityConstant);
-            
-            for (let i = 1; i < blackHoles.length; i++) {
-                 blackHoles[i].velocity.multiplyScalar(scaleFactor);
-            }
-
-            gravityConstant = newGravity;
-            gravityInput.value = newGravity.toFixed(1);
-            gravitySlider.value = newGravity;
-            lastGravityConstant = newGravity;
-        }
-
-        gravitySlider.addEventListener('input', (e) => {
-            updateGravity(parseFloat(e.target.value));
-        });
-        gravityInput.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            if (isNaN(value) || value < 0.1) return;
-            updateGravity(value);
-        });
-
-        powerSlider.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            cannonPower = value;
-            powerInput.value = value.toFixed(0);
-        });
-        powerInput.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            if (isNaN(value) || value < 10) return;
-            cannonPower = value;
-            powerSlider.value = value;
-        });
-
-        ammoSelect.addEventListener('change', updateAmmoUI);
-        fireButton.addEventListener('click', fireCannon);
-        document.getElementById('clear-btn').addEventListener('click', () => {
-            for(let i = blackHoles.length - 1; i >= 2; i--) {
-                scene.remove(blackHoles[i].mesh);
-                blackHoles.splice(i, 1);
-            }
-            celestialObjects.forEach(obj => {
-                if(obj.light) obj.mesh.remove(obj.light);
-                scene.remove(obj.mesh);
-                obj.mesh.geometry.dispose();
-                obj.mesh.material.dispose();
-            });
-            celestialObjects = [];
-            transitionQueue = [];
-            whiteHoles.forEach(wh => scene.remove(wh.mesh));
-            whiteHoles = [];
-            updateObjectCount();
-            updateGravityMenu();
-        });
-        
-        // --- CAMERA & POINTER LOCK LOGIC ---
-        function isMobileDevice() {
-            return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-        }
-
-        if (isMobileDevice()) {
-            // Mobile: tap to aim/fire, tap outside to exit
-            renderer.domElement.addEventListener('touchstart', (e) => {
-                if (cameraMode === 'cinematic') setCameraMode('aiming');
-                else if (cameraMode === 'aiming') {
-                    fireCannon();
-                }
-            });
-            document.body.addEventListener('touchstart', (e) => {
-                if (cameraMode === 'aiming' && !e.target.closest('#cannon-controls')) {
-                    setCameraMode('cinematic');
-                }
-            });
-        } else {
-            renderer.domElement.addEventListener('click', () => {
-                if (cameraMode === 'cinematic') {
-                    renderer.domElement.requestPointerLock();
-                }
-            });
-            document.addEventListener('pointerlockchange', () => {
-                if (document.pointerLockElement === renderer.domElement) setCameraMode('aiming');
-                else if (cameraMode === 'aiming') setCameraMode('cinematic');
-            });
-        }
-        
         function setCameraMode(mode) {
-            cameraMode = mode;
-            const panels = document.querySelectorAll('.controls-panel');
+            state.cameraMode = mode;
             if (mode === 'aiming') {
-                activeCamera = cannonCamera;
-                crosshair.style.display = 'block';
-                controlsInfo.textContent = 'WASD to Move | Left Click to Fire | Middle Click/Esc to Exit';
-                panels.forEach(p => p.style.opacity = '0.5');
-                document.body.style.cursor = 'none';
-                updateAmmoUI();
-            } else { // cinematic
-                activeCamera = cinematicCamera;
-                crosshair.style.display = 'none';
-                controlsInfo.textContent = 'Click simulation to aim & move cannon';
-                panels.forEach(p => p.style.opacity = '1');
-                document.body.style.cursor = 'pointer';
-                if (ammoCard) ammoCard.classList.remove('visible');
+                activeCamera = cannonCamera; ui.crosshair.style.display = 'block';
+                ui.mainControls.style.opacity = '0.5';
+                if (state.isMobile) {
+                    ui.mobileControls.style.display = 'flex';
+                    setTimeout(() => ui.mobileControls.classList.add('visible'), 50);
+                    ui.toggleAimBtn.textContent = 'Exit';
+                    ui.controlsInfoEl.textContent = 'Use joysticks to aim and move.';
+                } else {
+                    renderer.domElement.requestPointerLock();
+                    ui.controlsInfoEl.textContent = 'WASD/Mouse | Click to Fire | Esc to Exit';
+                }
+            } else {
+                activeCamera = cinematicCamera; ui.crosshair.style.display = 'none';
+                ui.mainControls.style.opacity = '1';
+                if (state.isMobile) {
+                    ui.mobileControls.classList.remove('visible');
+                    setTimeout(() => ui.mobileControls.style.display = 'none', 400);
+                    ui.toggleAimBtn.textContent = 'Aim';
+                    ui.controlsInfoEl.textContent = 'Tap "Aim" to control cannon.';
+                } else {
+                    if(document.pointerLockElement) document.exitPointerLock();
+                    ui.controlsInfoEl.textContent = 'Click simulation to aim.';
+                }
             }
         }
 
-        document.addEventListener('keydown', (e) => { keyState[e.code] = true; });
-        document.addEventListener('keyup', (e) => { keyState[e.code] = false; });
+        renderer.domElement.addEventListener('click', () => { if (!state.isMobile && state.cameraMode === 'cinematic') setCameraMode('aiming'); });
+        document.addEventListener('pointerlockchange', () => { if (!state.isMobile && document.pointerLockElement !== renderer.domElement && state.cameraMode === 'aiming') setCameraMode('cinematic'); });
+        document.addEventListener('keydown', (e) => { state.keyState[e.code] = true; });
+        document.addEventListener('keyup', (e) => { state.keyState[e.code] = false; });
+        document.addEventListener('mousemove', (e) => { if (state.cameraMode !== 'aiming' || state.isMobile) return; cannon.rotation.y -= e.movementX * 0.002; barrelGroup.rotation.x = Math.max(-Math.PI / 2 + 0.2, Math.min(Math.PI / 2 - 0.2, barrelGroup.rotation.x - e.movementY * 0.002)); });
+        renderer.domElement.addEventListener('mousedown', (e) => { if (state.cameraMode === 'aiming' && !state.isMobile && e.button === 0) fireCannon(); });
+        document.addEventListener('wheel', (e) => { if (state.cameraMode !== 'aiming' || state.isMobile) return; let currentIndex = ui.ammoSelect.selectedIndex; currentIndex += Math.sign(e.deltaY); if (currentIndex < 0) currentIndex = ui.ammoSelect.options.length - 1; else if (currentIndex >= ui.ammoSelect.options.length) currentIndex = 0; ui.ammoSelect.selectedIndex = currentIndex; });
+        ui.mainFireBtn.addEventListener('click', fireCannon);
+        ui.toggleAimBtn.addEventListener('click', (e) => { e.stopPropagation(); setCameraMode(state.cameraMode === 'cinematic' ? 'aiming' : 'cinematic'); });
 
-        document.addEventListener('mousemove', (event) => {
-            if (cameraMode !== 'aiming') return;
-            const movementX = event.movementX || 0;
-            const movementY = event.movementY || 0;
-            const yawSensitivity = 0.002;
-            const pitchSensitivity = 0.002;
-            cannonYaw -= movementX * yawSensitivity;
-            cannonPitch -= movementY * pitchSensitivity;
-            const maxPitch = Math.PI / 2 - 0.2;
-            cannonPitch = Math.max(-maxPitch, Math.min(maxPitch, cannonPitch));
+        function setupJoystick(elementId, onMove) {
+            const container = document.getElementById(elementId); if (!container) return;
+            const handle = container.querySelector('.joystick-handle');
+            let activeTouchId = null, rect;
+            const updateRect = () => { rect = container.getBoundingClientRect(); };
+            updateRect(); window.addEventListener('resize', updateRect);
+            container.addEventListener('touchstart', (e) => { e.preventDefault(); if (activeTouchId === null) { activeTouchId = e.changedTouches[0].identifier; updateRect(); } }, { passive: false });
+            container.addEventListener('touchmove', (e) => { e.preventDefault(); for (let touch of e.changedTouches) { if (touch.identifier === activeTouchId) { const center = { x: rect.width / 2, y: rect.height / 2 }; let x = touch.clientX - rect.left, y = touch.clientY - rect.top; let deltaX = x - center.x, deltaY = y - center.y; let distance = Math.sqrt(deltaX*deltaX + deltaY*deltaY); let maxDist = center.x; if (distance > maxDist) { deltaX = (deltaX / distance) * maxDist; deltaY = (deltaY / distance) * maxDist; } handle.style.transform = `translate(${deltaX}px, ${deltaY}px)`; onMove(deltaX / maxDist, deltaY / maxDist); } } }, { passive: false });
+            const endTouch = (e) => { for (let touch of e.changedTouches) { if (touch.identifier === activeTouchId) { activeTouchId = null; handle.style.transform = 'translate(-50%, -50%)'; onMove(0, 0); break; } } };
+            container.addEventListener('touchend', endTouch); container.addEventListener('touchcancel', endTouch);
+        }
+
+        let moveInput = { x: 0, y: 0 }, aimInput = { x: 0, y: 0 };
+        if (state.isMobile) {
+            setupJoystick('joystick-move', (x, y) => { moveInput = { x, y }; });
+            setupJoystick('joystick-aim', (x, y) => { aimInput = { x, y }; });
+            document.getElementById('mobile-fire-button').addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); fireCannon(); }, { passive: false });
+        }
+
+        ui.gravitySlider.addEventListener('input', (e) => { ui.gravityInput.value = e.target.value; updateGravity(parseFloat(e.target.value)); });
+        ui.gravityInput.addEventListener('change', (e) => { ui.gravitySlider.value = e.target.value; updateGravity(parseFloat(e.target.value)); });
+        ui.powerSlider.addEventListener('input', (e) => { ui.powerInput.value = e.target.value; state.cannonPower = parseFloat(e.target.value); });
+        ui.powerInput.addEventListener('change', (e) => { ui.powerSlider.value = e.target.value; state.cannonPower = parseFloat(e.target.value); });
+        
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            location.reload();
         });
 
-        renderer.domElement.addEventListener('mousedown', (event) => {
-            if (cameraMode === 'aiming') {
-                if (event.button === 0) fireCannon();
-                else if (event.button === 1) document.exitPointerLock();
-            }
+        if (state.isMobile) {
+            ui.collapsibleControls.classList.add('collapsed');
+            ui.toggleControlsBtn.textContent = 'Show';
+        }
+
+        ui.toggleControlsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isCollapsed = ui.collapsibleControls.classList.toggle('collapsed');
+            ui.toggleControlsBtn.textContent = isCollapsed ? 'Show' : 'Hide';
         });
 
-        document.addEventListener('wheel', (event) => {
-            if (cameraMode !== 'aiming') return;
-            const scrollDirection = Math.sign(event.deltaY);
-            let currentIndex = ammoSelect.selectedIndex;
-            currentIndex += scrollDirection;
-            if (currentIndex < 0) currentIndex = ammoSelect.options.length - 1;
-            else if (currentIndex >= ammoSelect.options.length) currentIndex = 0;
-            ammoSelect.selectedIndex = currentIndex;
+        function updateAmmoUI() {
+            const selectedOption = ui.ammoSelect.options[ui.ammoSelect.selectedIndex];
+            ui.currentAmmoName.textContent = selectedOption.text;
+        }
+
+        ui.ammoSelect.addEventListener('change', updateAmmoUI);
+        ui.prevAmmoBtn.addEventListener('click', () => {
+            ui.ammoSelect.selectedIndex = (ui.ammoSelect.selectedIndex - 1 + ui.ammoSelect.options.length) % ui.ammoSelect.options.length;
+            updateAmmoUI();
+        });
+        ui.nextAmmoBtn.addEventListener('click', () => {
+            ui.ammoSelect.selectedIndex = (ui.ammoSelect.selectedIndex + 1) % ui.ammoSelect.options.length;
             updateAmmoUI();
         });
 
-        function updateObjectCount() {
-            if(objectCountEl) {
-                objectCountEl.textContent = `Objects in scene: ${(celestialObjects.length + blackHoles.length - 2).toString()}`;
-            }
+        function updateGravity(newGravity) {
+            if (isNaN(newGravity) || newGravity <= 0) return;
+            const scaleFactor = Math.sqrt(newGravity / state.lastGravityConstant);
+            [...blackHoles, ...celestialObjects].forEach(obj => obj.velocity.multiplyScalar(scaleFactor));
+            state.gravityConstant = newGravity;
+            state.lastGravityConstant = newGravity > 0 ? newGravity : 0.1;
         }
-        
+
         window.addEventListener('resize', () => {
             const aspect = window.innerWidth / window.innerHeight;
-            cinematicCamera.aspect = aspect;
-            cinematicCamera.updateProjectionMatrix();
-            cannonCamera.aspect = aspect;
-            cannonCamera.updateProjectionMatrix();
+            cinematicCamera.aspect = aspect; cinematicCamera.updateProjectionMatrix();
+            cannonCamera.aspect = aspect; cannonCamera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // --- ANIMATION LOOP ---
-        const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
-            const delta = clock.getDelta();
+            const delta = Math.min(0.05, clock.getDelta());
             const elapsedTime = clock.getElapsedTime();
-
-            if (cameraMode === 'cinematic') {
-                const time = elapsedTime * 0.1;
-                cinematicCamera.position.x = Math.sin(time * 0.7) * 550;
-                cinematicCamera.position.y = Math.cos(time * 0.3) * 250;
-                cinematicCamera.position.z = Math.cos(time * 0.7) * 550;
+            if (state.cameraMode === 'cinematic') {
+                const time = elapsedTime * 0.08;
+                cinematicCamera.position.x = Math.sin(time * 0.7) * 600;
+                cinematicCamera.position.y = Math.cos(time * 0.5) * 350;
+                cinematicCamera.position.z = Math.cos(time * 0.9) * 600;
                 cinematicCamera.lookAt(smbh.position);
             }
-            
-            if (cameraMode === 'aiming') {
-                updateCannonMovement(delta);
-                cannon.rotation.y = cannonYaw;
-                barrelGroup.rotation.x = cannonPitch;
-            }
-
-            if (recoilOffset > 0) {
-                cannonBarrel.position.z = recoilOffset;
-                recoilOffset -= 15 * delta;
-            } else {
-                cannonBarrel.position.z = 0;
-            }
-
+            updateCannon(delta);
+            if (state.recoilOffset > 0) { cannonBarrel.position.z = state.recoilOffset; state.recoilOffset -= 15 * delta; } else { cannonBarrel.position.z = 0; }
             smbhAccretionDisk.rotation.y += 0.0005;
             orbitingBhAccretionDisk.rotation.y += 0.001;
             updatePhysics(delta);
-            
             if(trajectoryLine) {
-                if(cameraMode === 'aiming') updateTrajectory();
-                trajectoryLine.visible = cameraMode === 'aiming' && canFire;
+                if(state.cameraMode === 'aiming') updateTrajectory();
+                trajectoryLine.visible = state.cameraMode === 'aiming' && state.canFire;
             }
-
             renderer.render(scene, activeCamera);
         }
-
-        function updateCannonMovement(delta) {
-            const moveSpeed = 100;
-            const forward = new THREE.Vector3();
+        
+        function updateCannon(delta) {
+            const moveSpeed = 100 * delta, aimSpeed = 1.5 * delta;
+            const forward = new THREE.Vector3(), right = new THREE.Vector3();
             cannon.getWorldDirection(forward);
-            
-            const right = new THREE.Vector3();
-            right.crossVectors(cinematicCamera.up, forward).normalize();
-
-            if (keyState['KeyW']) cannon.position.addScaledVector(forward, moveSpeed * delta);
-            if (keyState['KeyS']) cannon.position.addScaledVector(forward, -moveSpeed * delta);
-            if (keyState['KeyA']) cannon.position.addScaledVector(right, -moveSpeed * delta);
-            if (keyState['KeyD']) cannon.position.addScaledVector(right, moveSpeed * delta);
+            right.crossVectors(cannon.up, forward);
+            if (state.cameraMode === 'aiming') {
+                if (state.isMobile) {
+                    if (moveInput.y !== 0) cannon.position.addScaledVector(forward, -moveInput.y * moveSpeed);
+                    if (moveInput.x !== 0) cannon.position.addScaledVector(right, moveInput.x * moveSpeed);
+                    cannon.rotation.y -= aimInput.x * aimSpeed;
+                    barrelGroup.rotation.x = Math.max(-Math.PI / 2 + 0.2, Math.min(Math.PI / 2 - 0.2, barrelGroup.rotation.x - aimInput.y * aimSpeed));
+                } else {
+                    if (state.keyState['KeyW']) cannon.position.addScaledVector(forward, moveSpeed);
+                    if (state.keyState['KeyS']) cannon.position.addScaledVector(forward, -moveSpeed);
+                    if (state.keyState['KeyA']) cannon.position.addScaledVector(right, -moveSpeed);
+                    if (state.keyState['KeyD']) cannon.position.addScaledVector(right, moveSpeed);
+                }
+            }
         }
 
-        // --- INITIALIZATION ---
+        setCameraMode('cinematic');
+        updateObjectCount();
+        updateMassEditor();
         updateAmmoUI();
-        updateGravityMenu();
-        if (ammoCard) ammoCard.classList.remove('visible');
         animate();
     </script>
 </body>
