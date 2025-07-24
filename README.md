@@ -11,6 +11,7 @@ Welcome to the **Quantum Atom Explorer**! This interactive science tool lets you
 
 
 
+
 ## 🚀 Try It Out Instantly!
 
 <div align="center" style="margin: 24px 0;">
@@ -25,6 +26,16 @@ Or open any of the main pages locally:
 - `index.html` — Atom Explorer
 - `electron.html` — Electron Explorer
 - `lab.html` — Chemistry Lab
+
+---
+
+## 🖼️ App Screenshots
+
+<div align="center">
+  <img src="screenshot1.png" alt="App Screenshot 1" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
+  <img src="screenshot2.png" alt="App Screenshot 2" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
+  <img src="screenshot3.png" alt="App Screenshot 3" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
+</div>
 
 ---
 
