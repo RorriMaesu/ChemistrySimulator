@@ -32,9 +32,9 @@ Or open any of the main pages locally:
 ## 🖼️ App Screenshots
 
 <div align="center">
-  <img src="screenshot1.png" alt="App Screenshot 1" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
-  <img src="screenshot2.png" alt="App Screenshot 2" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
-  <img src="screenshot3.png" alt="App Screenshot 3" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
+  <img src="AtomScreenshot.png" alt="Atom Explorer Screenshot" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
+  <img src="LabScreenshot.png" alt="Chemistry Lab Screenshot" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
+  <img src="PeriodicTableScreenshot.png" alt="Periodic Table Screenshot" width="340" style="margin:12px; border-radius:18px; box-shadow:0 0 18px #48cae4a0;" />
 </div>
 
 ---
