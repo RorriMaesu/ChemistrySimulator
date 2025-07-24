@@ -10,8 +10,18 @@ Welcome to the **Quantum Atom Explorer**! This interactive science tool lets you
 - **Guided Tour, Settings, and About:** Learn more about the science and the app.
 
 
-## Try It Out
-Just open `index.html` in your browser, or any of the main pages:
+
+## 🚀 Try It Out Instantly!
+
+<div align="center" style="margin: 24px 0;">
+  <a href="https://rorrimaesu.github.io/ChemistrySimulator/" target="_blank">
+    <img src="https://img.shields.io/badge/Launch%20Chemistry%20Simulator-Click%20Here%20to%20Play!-48cae4?style=for-the-badge&logo=github" alt="Launch Chemistry Simulator" style="margin-bottom:12px; box-shadow:0 0 18px #48cae4a0; border-radius:18px;" />
+  </a>
+  <br>
+  <strong style="font-size:1.2em; color:#48cae4;">✨ No install needed — runs right in your browser! ✨</strong>
+</div>
+
+Or open any of the main pages locally:
 - `index.html` — Atom Explorer
 - `electron.html` — Electron Explorer
 - `lab.html` — Chemistry Lab
