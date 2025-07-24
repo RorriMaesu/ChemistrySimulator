@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chemistry Lab</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 60% 40%,#101a2b 70%,#1a2233 100%);
+      color: #e0e0e0;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #main {
+      display: grid;
+      grid-template-columns: minmax(380px, 1.2fr) minmax(340px, 0.9fr) minmax(700px, 2fr) minmax(340px, 1fr);
+      grid-template-rows: auto;
+      grid-template-areas: "periodic reaction molecule molecule-list";
+      gap: 24px;
+      width: 98vw;
+      max-width: 1920px;
+      margin: 0 auto;
+      padding-top: 70px;
+      box-sizing: border-box;
+      min-height: calc(100vh - 70px);
+      align-items: start;
+    }
+    @media (max-width: 1600px) {
+      #main {
+        grid-template-columns: 1fr 0.9fr 1.5fr 1fr;
+        gap: 20px;
+        max-width: 1400px;
+      }
+    }
+    @media (max-width: 1200px) {
+      #main {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto auto auto;
+        grid-template-areas:
+          "periodic reaction"
+          "molecule molecule-list";
+        gap: 16px;
+        padding-top: 60px;
+        width: 99vw;
+        max-width: 99vw;
+      }
+      #molecule-3d-panel {
+        max-width: none;
+      }
+      #molecule-3d {
+        max-width: 100%;
+        height: 420px;
+      }
+      #reaction-vessel {
+        max-width: 340px;
+        height: 340px;
+      }
+      #periodic-table-panel, #molecule-list-panel {
+        max-width: none;
+        min-width: unset;
+      }
+    }
+    @media (max-width: 900px) {
+      #main {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-top: 50px;
+        width: 100vw;
+        max-width: 100vw;
+      }
+      .card-panel {
+        min-width: 0;
+        max-width: 98vw;
+        width: 98vw;
+        margin: 0 auto 12px auto;
+      }
+      #molecule-3d {
+        max-width: 98vw;
+        height: 60vw;
+        min-height: 320px;
+      }
+      #periodic-table-panel, #molecule-list-panel {
+        max-width: 98vw;
+        padding: 12px 4vw;
+      }
+      #reaction-vessel {
+        max-width: 90vw;
+        height: 90vw;
+        min-height: 200px;
+        max-height: 400px;
+      }
+    }
+    @media (max-width: 600px) {
+      #lab-title { font-size: 28px; padding: 4px 8px; }
+      #main { padding-top: 40px; }
+      .card-panel { border-radius: 16px; }
+      #molecule-3d { min-height: 220px; }
+      #periodic-table-panel, #reaction-vessel-panel, #molecule-3d-panel, #molecule-list-panel {
+        padding: 8px 2vw;
+        margin: 0 0 8px 0;
+        box-sizing: border-box;
+      }
+      #molecule-list-panel {
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+      #molecule-list-ul {
+        font-size: 15px;
+      }
+      .panel-header h2 {
+        font-size: 1.1rem;
+      }
+      .action-btn {
+        padding: 10px 18px;
+        font-size: 16px;
+      }
+      #reaction-vessel {
+        max-width: 98vw;
+        height: 40vw;
+        min-height: 160px;
+      }
+      #periodic-table {
+        min-width: 0;
+        gap: 4px;
+      }
+    }
+    #periodic-table-panel { grid-area: periodic; }
+    #reaction-vessel-panel { grid-area: reaction; }
+    #molecule-3d-panel { grid-area: molecule; }
+    #molecule-list-panel { grid-area: molecule-list; }
+    .card-panel {
+      background: rgba(20,30,50,0.92);
+      border-radius: 28px;
+      box-shadow: 0 0 32px #48cae4a0, 0 0 8px #fff2;
+      padding: 24px 18px 18px 18px;
+      margin: 0;
+      position: relative;
+      overflow-y: auto;
+      backdrop-filter: blur(4px);
+      min-width: 320px;
+      max-width: none;
+      width: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      box-sizing: border-box;
+    }
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background: rgba(20,30,50,0.92);
+      z-index: 2;
+      padding-bottom: 8px;
+    }
+    .panel-header h2 {
+      font-size: 1.7rem;
+      color: #48cae4;
+      font-weight: 700;
+      margin-bottom: 8px;
+      margin-top: 0;
+    }
+    .carousel-search-container {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: center;
+    }
+    .carousel-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .carousel-nav {
+      background: #1a2233;
+      color: #48cae4;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .carousel-nav:active {
+      background: #48cae4;
+      color: #fff;
+    }
+    .carousel-elements {
+      display: flex;
+      gap: 1rem;
+      min-width: 0;
+      flex: 1;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .carousel-tile {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      padding: 0.5rem;
+      text-align: center;
+      cursor: grab;
+      user-select: none;
+      transition: box-shadow 0.2s, background 0.2s;
+      font-size: 1.1rem;
+      min-width: 64px;
+      min-height: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #222;
+    }
+    .carousel-tile:active {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      background: #e0e0f0;
+    }
+    #element-search {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 7px 12px;
+      font-size: 15px;
+      border-radius: 8px;
+      border: none;
+      background: #1a2233;
+      color: #48cae4;
+      box-shadow: 0 0 8px #48cae4a0;
+      outline: none;
+    }
+    .vessel-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      justify-content: center;
+    }
+    .action-btn {
+      background: #48cae4;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 32px;
+      font-size: 20px;
+      font-weight: bold;
+      box-shadow: 0 0 18px #48cae4a0;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .action-btn:focus {
+      outline: 2px solid #48cae4;
+    }
+    #reaction-vessel {
+      width: 100%;
+      max-width: 400px;
+      height: 400px;
+      background: rgba(10,20,40,0.8);
+      border-radius: 50%;
+      box-shadow: 0 0 48px #48cae4 inset, 0 0 80px #48cae4a0, 0 0 8px #fff2;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      margin: 0 auto 12px auto;
+      backdrop-filter: blur(4px);
+    }
+    #vessel-elements {
+      min-height: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    #molecule-3d {
+      width: 100%;
+      max-width: 800px;
+      height: 800px;
+      background: rgba(10,20,40,0.8);
+      border-radius: 32px;
+      box-shadow: 0 0 48px #48cae4 inset, 0 0 80px #48cae4a0, 0 0 8px #fff2;
+      position: relative;
+      overflow: hidden;
+      margin: 0 auto;
+      backdrop-filter: blur(4px);
+    }
+    #molecule-list-panel {
+      width: auto;
+      max-width: none;
+      min-width: 320px;
+      background: rgba(20,30,50,0.92);
+      border-radius: 28px;
+      box-shadow: 0 0 32px #48cae4a0, 0 0 8px #fff2;
+      padding: 18px 12px;
+      margin: 0;
+      z-index: 2;
+      position: relative;
+      max-height: 88vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(4px);
+      box-sizing: border-box;
+    }
+    #molecule-list-ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 17px;
+      color: #e0e0e0;
+      overflow-y: auto;
+      max-height: 76vh;
+    }
+    #particle-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @media (max-width: 1200px) {
+      #main {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto auto auto;
+        grid-template-areas:
+          "periodic reaction"
+          "molecule molecule-list";
+        gap: 18px;
+        padding-top: 80px;
+      }
+      #molecule-3d {
+        max-width: 420px;
+        height: 420px;
+      }
+      #reaction-vessel {
+      max-width: 320px;
+      height: 320px;
+      }
+      #periodic-table-panel, #molecule-list-panel {
+        min-width: 180px;
+        max-width: 320px;
+      }
+    }
+    @media (max-width: 900px) {
+      #main {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding-top: 80px;
+        width: 100vw;
+        max-width: 100vw;
+      }
+      .card-panel {
+        min-width: 0;
+        max-width: 98vw;
+        width: 98vw;
+        margin: 0 auto 18px auto;
+      }
+      #molecule-3d {
+        max-width: 98vw;
+        height: 60vw;
+        min-height: 320px;
+      }
+      #periodic-table-panel, #molecule-list-panel {
+        max-width: 98vw;
+        padding: 18px 8vw;
+      }
+    }
+    @media (max-width: 600px) {
+      #lab-title { font-size: 28px; padding: 4px 8px; }
+      #main { padding-top: 60px; }
+      .card-panel { border-radius: 16px; }
+      #molecule-3d { min-height: 220px; }
+    }
+    #lab-title {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 48px;
+      color: #48cae4;
+      text-shadow: 0 0 24px #48cae4a0, 0 0 2px #fff;
+      font-weight: 900;
+      z-index: 20;
+      letter-spacing: 2px;
+      padding: 10px 40px;
+      border-radius: 18px;
+      background: rgba(20,30,50,0.7);
+      box-shadow: 0 0 32px #48cae4a0;
+      backdrop-filter: blur(2px);
+    }
+    #periodic-table-container {
+      min-width: 340px;
+      max-width: 420px;
+      width: 100%;
+      background: rgba(20,30,50,0.92);
+      border-radius: 28px;
+      box-shadow: 0 0 32px #48cae4a0, 0 0 8px #fff2;
+      padding: 24px 18px 18px 18px;
+      margin-right: 0;
+      position: relative;
+      overflow-y: auto;
+      max-height: 88vh;
+      backdrop-filter: blur(4px);
+    }
+    #periodic-table {
+      display: grid;
+      grid-template-columns: repeat(18, 1fr);
+      grid-auto-rows: minmax(48px, auto);
+      gap: 4px;
+      width: 100%;
+      margin-top: 8px;
+      margin-bottom: 0;
+    }
+    .element {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      height: 48px;
+      background: linear-gradient(90deg,#48cae4 60%,#1a2233 100%);
+      color: #fff;
+      border-radius: 12px;
+      font-size: 19px;
+      font-weight: 700;
+      box-shadow: 0 0 14px #48cae4a0, 0 0 2px #fff2;
+      cursor: grab;
+      user-select: none;
+      transition: background 0.2s, color 0.2s, box-shadow 0.3s, transform 0.2s;
+    }
+    .element:hover {
+      background: linear-gradient(90deg,#1a2233 60%,#48cae4 100%);
+      color: #48cae4;
+      box-shadow: 0 0 22px #48cae4a0, 0 0 4px #fff2;
+      transform: scale(1.09);
+    }
+    .element:active {
+      transform: scale(0.97);
+    }
+    #vessel-elements {
+      min-height: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    #molecule-3d {
+      width: 520px;
+      height: 520px;
+      background: rgba(10,20,40,0.8);
+      border-radius: 32px;
+      box-shadow: 0 0 48px #48cae4 inset, 0 0 80px #48cae4a0, 0 0 8px #fff2;
+      position: relative;
+      overflow: visible;
+      margin-left: 0;
+      margin-right: 0;
+      backdrop-filter: blur(4px);
+    }
+    #molecule-list {
+      width: 320px;
+      min-width: 180px;
+      background: rgba(20,30,50,0.92);
+      border-radius: 28px;
+      box-shadow: 0 0 32px #48cae4a0, 0 0 8px #fff2;
+      padding: 18px 12px;
+      margin-left: 0;
+      z-index: 2;
+      position: relative;
+      max-height: 88vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(4px);
+    }
+    #molecule-list-ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 16px;
+      color: #e0e0e0;
+      overflow-y: auto;
+      max-height: 76vh;
+    }
+    #particle-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .element[data-symbol] {
+      margin: 2px 2px;
+      box-shadow: 0 0 10px #48cae4a0, 0 0 2px #fff2;
+    }
+    .element:active {
+      transform: scale(0.97);
+    }
+    button {
+      font-family: inherit;
+      outline: none;
+    }
+    @media (max-width: 1400px) {
+      #main { flex-wrap: wrap; gap: 18px; }
+      #molecule-3d { width: 420px; height: 420px; }
+      #reaction-vessel { width: 260px; height: 260px; }
+      #periodic-table-container { min-width: 220px; max-width: 320px; }
+      #molecule-list { width: 220px; }
+    }
+    @media (max-width: 900px) {
+      #main { flex-direction: column; gap: 18px; padding-top: 80px; }
+      #periodic-table-container, #reaction-vessel, #molecule-3d, #molecule-list { margin-right: 0; margin-bottom: 18px; }
+      #molecule-3d { width: 98vw; height: 60vw; min-height: 320px; }
+      #periodic-table-container { max-width: 98vw; padding: 18px 8vw; }
+      #molecule-list { width: 98vw; min-width: 120px; }
+    }
+    @media (max-width: 600px) {
+      #lab-title { font-size: 28px; padding: 4px 8px; }
+      #main { padding-top: 60px; }
+      #periodic-table-container, #reaction-vessel, #molecule-3d, #molecule-list { border-radius: 16px; }
+      #molecule-3d { min-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particle-bg"></canvas>
+  <header id="lab-title" role="banner" tabindex="0">Chemistry Laboratory</header>
+  <main id="main" aria-label="Chemistry Lab Panels">
+    <section id="periodic-table-panel" class="card-panel" aria-label="Periodic Table">
+      <div class="panel-header sticky-header">
+        <h2>Element Selection</h2>
+        <div class="carousel-search-container">
+          <input id="element-search" type="text" placeholder="Search elements..." aria-label="Search elements" />
+        </div>
+        <div class="carousel-container">
+          <button id="carousel-left" class="carousel-nav" aria-label="Previous elements">&#8592;</button>
+          <div id="carousel-elements" class="carousel-elements"></div>
+          <button id="carousel-right" class="carousel-nav" aria-label="Next elements">&#8594;</button>
+        </div>
+      </div>
+    </section>
+    <section id="reaction-vessel-panel" class="card-panel" aria-label="Reaction Vessel">
+      <div class="panel-header sticky-header">
+        <h2>Reaction Vessel</h2>
+      </div>
+      <div id="reaction-vessel">
+        <div id="vessel-elements" aria-live="polite"></div>
+        <div class="vessel-actions">
+          <button id="mix-btn" class="action-btn" aria-label="Mix and React">Mix & React</button>
+          <button id="clear-btn" class="action-btn" aria-label="Clear Vessel">Clear</button>
+        </div>
+      </div>
+    </section>
+    <section id="molecule-3d-panel" class="card-panel" aria-label="3D Molecule Visualization">
+      <div class="panel-header sticky-header">
+        <h2>3D Molecule</h2>
+      </div>
+      <div id="molecule-3d"></div>
+    </section>
+    <aside id="molecule-list-panel" class="card-panel" aria-label="Possible Molecules">
+      <div class="panel-header sticky-header">
+        <h2>Possible Molecules</h2>
+      </div>
+      <ul id="molecule-list-ul"></ul>
+    </aside>
+  </main>
+  <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+  <!-- Quantum Menu injection -->
+  <script>
+    function createExpensiveMenu() {
+      // --- Buy Me a Coffee Popup Injection ---
+      if (!document.getElementById('donate-popup')) {
+        const donatePopup = document.createElement('div');
+        donatePopup.id = 'donate-popup';
+        donatePopup.style.position = 'fixed';
+        donatePopup.style.bottom = '38px';
+        donatePopup.style.right = '38px';
+        donatePopup.style.zIndex = '9999';
+        donatePopup.style.background = 'linear-gradient(135deg,#48cae4 60%,#ffde59 100%)';
+        donatePopup.style.border = '4px solid #fff200';
+        donatePopup.style.borderRadius = '32px';
+        donatePopup.style.boxShadow = '0 0 48px #48cae4a0, 0 0 0 8px #fff200a0 inset, 0 0 32px #ffde59a0';
+        donatePopup.style.padding = '32px 38px 32px 38px';
+        donatePopup.style.display = 'flex';
+        donatePopup.style.flexDirection = 'column';
+        donatePopup.style.alignItems = 'center';
+        donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';
+        donatePopup.style.cursor = 'pointer';
+        donatePopup.innerHTML = `
+          <div style="font-size:34px;font-weight:900;color:#fff200;text-shadow:0 0 24px #48cae4a0,0 0 12px #fff200,0 0 32px #ffde59;letter-spacing:1.5px;margin-bottom:10px;animation:donatePulse 1.2s infinite alternate;filter:drop-shadow(0 0 18px #ffde59);">☕ Support This Project!</div>
+          <div style="font-size:21px;color:#1a2233;font-weight:700;margin-bottom:18px;text-align:center;max-width:340px;line-height:1.5;">If you love this interactive science tool,<br>please consider <span style='color:#48cae4;font-weight:900;text-shadow:0 0 8px #48cae4;'>buying me a coffee</span> to help keep it free and growing!<br><span style='font-size:17px;color:#ff3c7e;font-weight:900;text-shadow:0 0 8px #ff3c7e;'>Your support means the world! 💖</span></div>
+          <button id="donate-btn" style="font-size:25px;font-weight:900;padding:18px 44px;background:linear-gradient(90deg,#ffde59 60%,#48cae4 100%);color:#1a2233;border:none;border-radius:22px;box-shadow:0 0 28px #48cae4a0,0 0 12px #fff200,0 0 18px #ffde59;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;animation:donateBtnBounce 1.5s infinite alternate;letter-spacing:1px;filter:drop-shadow(0 0 8px #ffde59);">☕ Buy Me a Coffee</button>
+          <span id="donate-close" style="position:absolute;top:10px;right:18px;font-size:32px;color:#1a2233;cursor:pointer;font-weight:900;opacity:0.7;transition:color 0.2s;">×</span>
+        `;
+        donatePopup.onmouseenter = () => donatePopup.style.transform = 'scale(1.07) rotate(-2deg)';
+        donatePopup.onmouseleave = () => donatePopup.style.transform = '';
+        document.body.appendChild(donatePopup);
+        // Animate in
+        setTimeout(()=>{donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';}, 100);
+        // Button click
+        donatePopup.querySelector('#donate-btn').onclick = (e) => {
+          e.stopPropagation();
+          window.open('https://buymeacoffee.com/rorrimaesu','_blank');
+          donatePopup.style.animation = 'donatePopOut 0.7s';
+          setTimeout(()=>donatePopup.style.display='none',650);
+        };
+        // Close button
+        donatePopup.querySelector('#donate-close').onclick = (e) => {
+          e.stopPropagation();
+          donatePopup.style.animation = 'donatePopOut 0.7s';
+          setTimeout(()=>donatePopup.style.display='none',650);
+        };
+        // Reappear after 90s if not clicked
+        setTimeout(()=>{
+          if (donatePopup.style.display!=='none') return;
+          donatePopup.style.display='flex';
+          donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';
+        },90000);
+        // Add keyframes
+        const style = document.createElement('style');
+        style.innerHTML = `
+          @keyframes donatePopIn {
+            0% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
+            60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          }
+          @keyframes donatePopOut {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0.2) rotate(30deg); opacity: 0; }
+          }
+          @keyframes donatePulse {
+            0% { text-shadow: 0 0 18px #48cae4a0,0 0 8px #fff200; }
+            100% { text-shadow: 0 0 38px #ffde59,0 0 18px #48cae4; }
+          }
+          @keyframes donateBtnBounce {
+            0% { transform: scale(1) translateY(0); }
+            100% { transform: scale(1.08) translateY(-8px); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      // ...existing code...
+      if (document.getElementById('expensive-menu')) return;
+      // Menu button (quantum icon)
+      const menuBtn = document.createElement('div');
+      menuBtn.id = 'expensive-menu-btn';
+      menuBtn.innerHTML = `<svg width="44" height="44" viewBox="0 0 44 44" style="filter:drop-shadow(0 0 12px #48cae4);"><circle cx="22" cy="22" r="18" fill="url(#g)" stroke="#48cae4" stroke-width="2"/><g><ellipse cx="22" cy="22" rx="12" ry="5" fill="none" stroke="#48cae4" stroke-width="2"/><ellipse cx="22" cy="22" rx="5" ry="12" fill="none" stroke="#48cae4" stroke-width="2" transform="rotate(60 22 22)"/><ellipse cx="22" cy="22" rx="5" ry="12" fill="none" stroke="#48cae4" stroke-width="2" transform="rotate(-60 22 22)"/></g><defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#48cae4"/><stop offset="100%" stop-color="#1a2233"/></radialGradient></defs></svg>`;
+      menuBtn.style.position = 'fixed';
+      menuBtn.style.top = '32px';
+      menuBtn.style.right = '38px';
+      menuBtn.style.zIndex = '300';
+      menuBtn.style.cursor = 'pointer';
+      menuBtn.style.transition = 'transform 0.3s cubic-bezier(.68,-0.55,.27,1.55)';
+      menuBtn.onmouseenter = () => menuBtn.style.transform = 'scale(1.15)';
+      menuBtn.onmouseleave = () => menuBtn.style.transform = '';
+      document.body.appendChild(menuBtn);
+
+      // Menu panel
+      const menuPanel = document.createElement('div');
+      menuPanel.id = 'expensive-menu';
+      menuPanel.style.position = 'fixed';
+      menuPanel.style.top = '24px';
+      menuPanel.style.right = '32px';
+      menuPanel.style.width = '340px';
+      menuPanel.style.maxWidth = '90vw';
+      menuPanel.style.background = 'rgba(20,30,50,0.92)';
+      menuPanel.style.border = '2px solid #48cae4';
+      menuPanel.style.borderRadius = '24px';
+      menuPanel.style.boxShadow = '0 0 48px #48cae4a0, 0 0 0 8px #1a2233a0 inset';
+      menuPanel.style.backdropFilter = 'blur(18px)';
+      menuPanel.style.padding = '38px 32px 32px 32px';
+      menuPanel.style.zIndex = '350';
+      menuPanel.style.display = 'none';
+      menuPanel.style.flexDirection = 'column';
+      menuPanel.style.gap = '22px';
+      menuPanel.style.animation = '';
+      menuPanel.innerHTML = `
+          <div style="font-size:28px;font-weight:700;color:#48cae4;text-shadow:0 0 18px #48cae4a0;letter-spacing:1px;margin-bottom:18px;">Quantum Menu</div>
+          <div class="menu-item" data-link="atom">🔬 Atom Explorer</div>
+          <div class="menu-item" data-link="electron">⚡ Electron Explorer</div>
+          <div class="menu-item" data-link="lab">🧪 Chemistry Lab</div>
+          <div class="menu-item" data-link="tour">🧭 Guided Tour</div>
+          <div class="menu-item" data-link="settings">⚙️ Settings</div>
+          <div class="menu-item" data-link="about">📚 About</div>
+      `;
+      document.body.appendChild(menuPanel);
+
+      // Particle background animation (canvas)
+      const particleCanvas = document.createElement('canvas');
+      particleCanvas.width = 340;
+      particleCanvas.height = 420;
+      particleCanvas.style.position = 'absolute';
+      particleCanvas.style.top = '0';
+      particleCanvas.style.left = '0';
+      particleCanvas.style.width = '100%';
+      particleCanvas.style.height = '100%';
+      particleCanvas.style.pointerEvents = 'none';
+      particleCanvas.style.zIndex = '0';
+      menuPanel.appendChild(particleCanvas);
+      // Animate particles
+      let particles = Array.from({length: 38}, () => ({x: Math.random()*340, y: Math.random()*420, r: Math.random()*2+1, dx: (Math.random()-0.5)*0.7, dy: (Math.random()-0.5)*0.7, hue: Math.random()*360}));
+      function drawParticles() {
+          const ctx = particleCanvas.getContext('2d');
+          ctx.clearRect(0,0,340,420);
+          for (const p of particles) {
+              ctx.save();
+              ctx.globalAlpha = 0.18 + Math.abs(Math.sin(Date.now()/700+p.x))*0.12;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+              ctx.fillStyle = `hsl(${p.hue},80%,60%)`;
+              ctx.shadowColor = `hsl(${p.hue},80%,60%)`;
+              ctx.shadowBlur = 12;
+              ctx.fill();
+              ctx.restore();
+              p.x += p.dx; p.y += p.dy;
+              if (p.x<0||p.x>340) p.dx*=-1;
+              if (p.y<0||p.y>420) p.dy*=-1;
+          }
+          requestAnimationFrame(drawParticles);
+      }
+      drawParticles();
+
+      // Menu open/close logic
+      menuBtn.onclick = () => {
+          menuPanel.style.display = menuPanel.style.display==='none'?'flex':'none';
+          menuPanel.style.animation = menuPanel.style.display==='flex'?'menuOpen 0.5s cubic-bezier(.68,-0.55,.27,1.55)':'menuClose 0.4s';
+      };
+
+      // Menu item animation and navigation
+      Array.from(menuPanel.getElementsByClassName('menu-item')).forEach(item => {
+          item.style.fontSize = '20px';
+          item.style.fontWeight = '600';
+          item.style.color = '#e0e0e0';
+          item.style.padding = '12px 18px';
+          item.style.borderRadius = '12px';
+          item.style.marginBottom = '6px';
+          item.style.cursor = 'pointer';
+          item.style.transition = 'background 0.2s, color 0.2s, box-shadow 0.3s, transform 0.2s';
+          item.onmouseenter = () => {
+              item.style.background = 'linear-gradient(90deg,#48cae4 60%,#1a2233 100%)';
+              item.style.color = '#fff';
+              item.style.boxShadow = '0 0 18px #48cae4a0';
+              item.style.transform = 'scale(1.08)';
+          };
+          item.onmouseleave = () => {
+              item.style.background = '';
+              item.style.color = '#e0e0e0';
+              item.style.boxShadow = '';
+              item.style.transform = '';
+          };
+          item.onclick = () => {
+              menuPanel.style.display = 'none';
+              if (item.dataset.link==='home') window.location.href='index.html';
+              if (item.dataset.link==='atom') window.location.href='index.html';
+              if (item.dataset.link==='electron') window.location.href='electron.html';
+              if (item.dataset.link==='lab') window.location.href='lab.html';
+              if (item.dataset.link==='tour') alert('Guided Tour coming soon!');
+              if (item.dataset.link==='settings') alert('Settings coming soon!');
+              if (item.dataset.link==='about') alert('Interactive Atom Visualizer\nCreated by Science Nerds.\nPowered by Quantum Canvas.');
+          };
+      });
+
+      // Responsive: shrink for mobile
+      function updateMenuLayout() {
+          if (window.innerWidth < 600) {
+              menuPanel.style.width = '98vw';
+              menuPanel.style.padding = '24px 8vw 24px 8vw';
+              menuBtn.style.right = '12px';
+              menuBtn.style.top = '12px';
+          } else {
+              menuPanel.style.width = '340px';
+              menuPanel.style.padding = '38px 32px 32px 32px';
+              menuBtn.style.right = '38px';
+              menuBtn.style.top = '32px';
+          }
+      }
+      window.addEventListener('resize', updateMenuLayout);
+      updateMenuLayout();
+    }
+    window.addEventListener('DOMContentLoaded', createExpensiveMenu);
+  </script>
+  <script>
+    // --- Particle Background Animation ---
+    // Utility: Normalize molecule formulas (convert Unicode subscripts to numbers)
+    function normalizeFormula(formula) {
+      return formula.replace(/₂/g,'2').replace(/₃/g,'3').replace(/₄/g,'4').replace(/₅/g,'5').replace(/₆/g,'6').replace(/₇/g,'7').replace(/₈/g,'8').replace(/₉/g,'9');
+    }
+    const particleCanvas = document.getElementById('particle-bg');
+    function resizeParticleCanvas() {
+      particleCanvas.width = window.innerWidth;
+      particleCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeParticleCanvas);
+    resizeParticleCanvas();
+    let particles = Array.from({length: 48}, () => ({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, r: Math.random()*2+1, dx: (Math.random()-0.5)*0.7, dy: (Math.random()-0.5)*0.7, hue: Math.random()*360}));
+    function drawParticles() {
+      const ctx = particleCanvas.getContext('2d');
+      ctx.clearRect(0,0,particleCanvas.width,particleCanvas.height);
+      for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = 0.18 + Math.abs(Math.sin(Date.now()/700+p.x))*0.12;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = `hsl(${p.hue},80%,60%)`;
+        ctx.shadowColor = `hsl(${p.hue},80%,60%)`;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+        p.x += p.dx; p.y += p.dy;
+        if (p.x<0||p.x>particleCanvas.width) p.dx*=-1;
+        if (p.y<0||p.y>particleCanvas.height) p.dy*=-1;
+      }
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    // --- Element Carousel ---
+    // Element data with categories (full array, must be defined here!)
+    // Full periodic table, 118 known elements + 10 speculative (119-128)
+    const elements = [
+      {symbol:'H',name:'Hydrogen',color:'#48cae4',type:'Nonmetal'},
+      {symbol:'He',name:'Helium',color:'#e0c3fc',type:'Noble Gas'},
+      {symbol:'Li',name:'Lithium',color:'#ffb347',type:'Alkali Metal'},
+      {symbol:'Be',name:'Beryllium',color:'#b2f7ef',type:'Alkaline Earth'},
+      {symbol:'B',name:'Boron',color:'#ffe066',type:'Metalloid'},
+      {symbol:'C',name:'Carbon',color:'#fff200',type:'Nonmetal'},
+      {symbol:'N',name:'Nitrogen',color:'#a3ffae',type:'Nonmetal'},
+      {symbol:'O',name:'Oxygen',color:'#ff3c7e',type:'Nonmetal'},
+      {symbol:'F',name:'Fluorine',color:'#7ee7ff',type:'Halogen'},
+      {symbol:'Ne',name:'Neon',color:'#e0c3fc',type:'Noble Gas'},
+      {symbol:'Na',name:'Sodium',color:'#f7b267',type:'Alkali Metal'},
+      {symbol:'Mg',name:'Magnesium',color:'#b2f7ef',type:'Alkaline Earth'},
+      {symbol:'Al',name:'Aluminum',color:'#b388ff',type:'Post-Transition'},
+      {symbol:'Si',name:'Silicon',color:'#ffe066',type:'Metalloid'},
+      {symbol:'P',name:'Phosphorus',color:'#fff200',type:'Nonmetal'},
+      {symbol:'S',name:'Sulfur',color:'#ffe066',type:'Nonmetal'},
+      {symbol:'Cl',name:'Chlorine',color:'#7ee7ff',type:'Halogen'},
+      {symbol:'Ar',name:'Argon',color:'#e0c3fc',type:'Noble Gas'},
+      {symbol:'K',name:'Potassium',color:'#b388ff',type:'Alkali Metal'},
+      {symbol:'Ca',name:'Calcium',color:'#e0c3fc',type:'Alkaline Earth'},
+      {symbol:'Sc',name:'Scandium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Ti',name:'Titanium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'V',name:'Vanadium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Cr',name:'Chromium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Mn',name:'Manganese',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Fe',name:'Iron',color:'#b388ff',type:'Transition Metal'},
+      {symbol:'Co',name:'Cobalt',color:'#b388ff',type:'Transition Metal'},
+      {symbol:'Ni',name:'Nickel',color:'#b388ff',type:'Transition Metal'},
+      {symbol:'Cu',name:'Copper',color:'#ffb347',type:'Transition Metal'},
+      {symbol:'Zn',name:'Zinc',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Ga',name:'Gallium',color:'#b388ff',type:'Post-Transition'},
+      {symbol:'Ge',name:'Germanium',color:'#ffe066',type:'Metalloid'},
+      {symbol:'As',name:'Arsenic',color:'#ffe066',type:'Metalloid'},
+      {symbol:'Se',name:'Selenium',color:'#ffe066',type:'Nonmetal'},
+      {symbol:'Br',name:'Bromine',color:'#7ee7ff',type:'Halogen'},
+      {symbol:'Kr',name:'Krypton',color:'#e0c3fc',type:'Noble Gas'},
+      {symbol:'Rb',name:'Rubidium',color:'#b388ff',type:'Alkali Metal'},
+      {symbol:'Sr',name:'Strontium',color:'#e0c3fc',type:'Alkaline Earth'},
+      {symbol:'Y',name:'Yttrium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Zr',name:'Zirconium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Nb',name:'Niobium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Mo',name:'Molybdenum',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Tc',name:'Technetium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Ru',name:'Ruthenium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Rh',name:'Rhodium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Pd',name:'Palladium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Ag',name:'Silver',color:'#ffb347',type:'Transition Metal'},
+      {symbol:'Cd',name:'Cadmium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'In',name:'Indium',color:'#b388ff',type:'Post-Transition'},
+      {symbol:'Sn',name:'Tin',color:'#b388ff',type:'Post-Transition'},
+      {symbol:'Sb',name:'Antimony',color:'#ffe066',type:'Metalloid'},
+      {symbol:'Te',name:'Tellurium',color:'#ffe066',type:'Metalloid'},
+      {symbol:'I',name:'Iodine',color:'#7ee7ff',type:'Halogen'},
+      {symbol:'Xe',name:'Xenon',color:'#e0c3fc',type:'Noble Gas'},
+      {symbol:'Cs',name:'Cesium',color:'#b388ff',type:'Alkali Metal'},
+      {symbol:'Ba',name:'Barium',color:'#e0c3fc',type:'Alkaline Earth'},
+      {symbol:'La',name:'Lanthanum',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Ce',name:'Cerium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Pr',name:'Praseodymium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Nd',name:'Neodymium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Pm',name:'Promethium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Sm',name:'Samarium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Eu',name:'Europium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Gd',name:'Gadolinium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Tb',name:'Terbium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Dy',name:'Dysprosium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Ho',name:'Holmium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Er',name:'Erbium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Tm',name:'Thulium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Yb',name:'Ytterbium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Lu',name:'Lutetium',color:'#b2f7ef',type:'Lanthanide'},
+      {symbol:'Hf',name:'Hafnium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Ta',name:'Tantalum',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'W',name:'Tungsten',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Re',name:'Rhenium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Os',name:'Osmium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Ir',name:'Iridium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Pt',name:'Platinum',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Au',name:'Gold',color:'#ffb347',type:'Transition Metal'},
+      {symbol:'Hg',name:'Mercury',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Tl',name:'Thallium',color:'#b388ff',type:'Post-Transition'},
+      {symbol:'Pb',name:'Lead',color:'#b388ff',type:'Post-Transition'},
+      {symbol:'Bi',name:'Bismuth',color:'#b388ff',type:'Post-Transition'},
+      {symbol:'Po',name:'Polonium',color:'#ffe066',type:'Post-Transition'},
+      {symbol:'At',name:'Astatine',color:'#7ee7ff',type:'Halogen'},
+      {symbol:'Rn',name:'Radon',color:'#e0c3fc',type:'Noble Gas'},
+      {symbol:'Fr',name:'Francium',color:'#b388ff',type:'Alkali Metal'},
+      {symbol:'Ra',name:'Radium',color:'#e0c3fc',type:'Alkaline Earth'},
+      {symbol:'Ac',name:'Actinium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Th',name:'Thorium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Pa',name:'Protactinium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'U',name:'Uranium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Np',name:'Neptunium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Pu',name:'Plutonium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Am',name:'Americium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Cm',name:'Curium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Bk',name:'Berkelium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Cf',name:'Californium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Es',name:'Einsteinium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Fm',name:'Fermium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Md',name:'Mendelevium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'No',name:'Nobelium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Lr',name:'Lawrencium',color:'#b2f7ef',type:'Actinide'},
+      {symbol:'Rf',name:'Rutherfordium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Db',name:'Dubnium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Sg',name:'Seaborgium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Bh',name:'Bohrium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Hs',name:'Hassium',color:'#b2f7ef',type:'Transition Metal'},
+      {symbol:'Mt',name:'Meitnerium',color:'#b2f7ef',type:'Unknown'},
+      {symbol:'Ds',name:'Darmstadtium',color:'#b2f7ef',type:'Unknown'},
+      {symbol:'Rg',name:'Roentgenium',color:'#b2f7ef',type:'Unknown'},
+      {symbol:'Cn',name:'Copernicium',color:'#b2f7ef',type:'Unknown'},
+      {symbol:'Fl',name:'Flerovium',color:'#b2f7ef',type:'Unknown'},
+      {symbol:'Lv',name:'Livermorium',color:'#b2f7ef',type:'Unknown'},
+      {symbol:'Ts',name:'Tennessine',color:'#b2f7ef',type:'Unknown'},
+      {symbol:'Og',name:'Oganesson',color:'#b2f7ef',type:'Unknown'},
+      // Speculative elements 119-128
+      {symbol:'Uue',name:'Ununennium',color:'#888',type:'Unknown'},
+      {symbol:'Ubn',name:'Unbinilium',color:'#888',type:'Unknown'},
+      {symbol:'Ubu',name:'Unbiunium',color:'#888',type:'Unknown'},
+      {symbol:'Ubb',name:'Unbibium',color:'#888',type:'Unknown'},
+      {symbol:'Ubt',name:'Unbitrium',color:'#888',type:'Unknown'},
+      {symbol:'Ubq',name:'Unbiquadium',color:'#888',type:'Unknown'},
+      {symbol:'Ubp',name:'Unbipentium',color:'#888',type:'Unknown'},
+      {symbol:'Ubh',name:'Unbihexium',color:'#888',type:'Unknown'},
+      {symbol:'Ubo',name:'Unbioctium',color:'#888',type:'Unknown'},
+      {symbol:'Ube',name:'Unbiennium',color:'#888',type:'Unknown'}
+    ];
+
+    const carouselElements = document.getElementById('carousel-elements');
+    const carouselLeft = document.getElementById('carousel-left');
+    const carouselRight = document.getElementById('carousel-right');
+    const elementSearch = document.getElementById('element-search');
+
+    let carouselIndex = 0;
+    const carouselSize = 5; // Number of elements visible at once
+    let filteredElements = elements.slice();
+
+    function renderCarousel() {
+      // Clamp carouselIndex to valid range
+      const maxIndex = Math.max(0, Math.ceil(filteredElements.length / carouselSize) * carouselSize - carouselSize);
+      if (carouselIndex > maxIndex) carouselIndex = maxIndex;
+      if (carouselIndex < 0) carouselIndex = 0;
+      carouselElements.innerHTML = '';
+      const start = carouselIndex;
+      const end = Math.min(start + carouselSize, filteredElements.length);
+      for (let i = start; i < end; i++) {
+        const element = filteredElements[i];
+        const tile = document.createElement('div');
+        tile.className = 'carousel-tile';
+        tile.draggable = true;
+        tile.title = element.name;
+        tile.style.background = element.color;
+        tile.innerHTML = `<strong>${element.symbol}</strong><span style=\"font-size:0.8em;color:#222;\">${element.name}</span>`;
+        tile.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', JSON.stringify(element));
+        });
+        carouselElements.appendChild(tile);
+      }
+      // Nav buttons are never disabled for endless cycling
+      carouselLeft.disabled = false;
+      carouselRight.disabled = false;
+    }
+
+    carouselLeft.addEventListener('click', () => {
+      const maxIndex = Math.max(0, Math.ceil(filteredElements.length / carouselSize) * carouselSize - carouselSize);
+      if (carouselIndex > 0) {
+        carouselIndex = Math.max(0, carouselIndex - carouselSize);
+      } else {
+        carouselIndex = maxIndex;
+      }
+      renderCarousel();
+    });
+
+    carouselRight.addEventListener('click', () => {
+      const maxIndex = Math.max(0, Math.ceil(filteredElements.length / carouselSize) * carouselSize - carouselSize);
+      if (carouselIndex < maxIndex) {
+        carouselIndex = Math.min(maxIndex, carouselIndex + carouselSize);
+      } else {
+        carouselIndex = 0;
+      }
+      renderCarousel();
+    });
+
+    elementSearch.addEventListener('input', () => {
+      const query = elementSearch.value.trim().toLowerCase();
+      filteredElements = elements.filter(e =>
+        e.symbol.toLowerCase().includes(query) ||
+        e.name.toLowerCase().includes(query)
+      );
+      // Clamp carouselIndex to 0 or max valid
+      carouselIndex = 0;
+      renderCarousel();
+    });
+
+    renderCarousel();
+    // --- Vast Molecule List Sidebar (animated, grouped) ---
+    const moleculeGroups = [
+      {
+        group: 'Water & Simple Gases',
+        molecules: [
+          {name:'Water',formula:'H₂O',elements:{H:2,O:1}},
+          {name:'Oxygen',formula:'O₂',elements:{O:2}},
+          {name:'Nitrogen',formula:'N₂',elements:{N:2}},
+          {name:'Hydrogen',formula:'H₂',elements:{H:2}},
+          {name:'Carbon Monoxide',formula:'CO',elements:{C:1,O:1}},
+          {name:'Carbon Dioxide',formula:'CO₂',elements:{C:1,O:2}},
+          {name:'Methane',formula:'CH₄',elements:{C:1,H:4}},
+          {name:'Ammonia',formula:'NH₃',elements:{N:1,H:3}},
+          {name:'Sulfur Dioxide',formula:'SO₂',elements:{S:1,O:2}},
+          {name:'Hydrogen Sulfide',formula:'H₂S',elements:{H:2,S:1}},
+          {name:'Nitric Oxide',formula:'NO',elements:{N:1,O:1}},
+          {name:'Nitrous Oxide',formula:'N₂O',elements:{N:2,O:1}},
+        ]
+      },
+      {
+        group: 'Acids',
+        molecules: [
+          {name:'Hydrochloric Acid',formula:'HCl',elements:{H:1,Cl:1}},
+          {name:'Sulfuric Acid',formula:'H₂SO₄',elements:{H:2,S:1,O:4}},
+          {name:'Nitric Acid',formula:'HNO₃',elements:{H:1,N:1,O:3}},
+          {name:'Phosphoric Acid',formula:'H₃PO₄',elements:{H:3,P:1,O:4}},
+          {name:'Acetic Acid',formula:'CH₃COOH',elements:{C:2,H:4,O:2}},
+        ]
+      },
+      {
+        group: 'Bases',
+        molecules: [
+          {name:'Sodium Hydroxide',formula:'NaOH',elements:{Na:1,O:1,H:1}},
+          {name:'Potassium Hydroxide',formula:'KOH',elements:{K:1,O:1,H:1}},
+          {name:'Calcium Hydroxide',formula:'Ca(OH)₂',elements:{Ca:1,O:2,H:2}},
+          {name:'Magnesium Hydroxide',formula:'Mg(OH)₂',elements:{Mg:1,O:2,H:2}},
+        ]
+      },
+      {
+        group: 'Salts',
+        molecules: [
+          {name:'Sodium Chloride',formula:'NaCl',elements:{Na:1,Cl:1}},
+          {name:'Potassium Nitrate',formula:'KNO₃',elements:{K:1,N:1,O:3}},
+          {name:'Calcium Carbonate',formula:'CaCO₃',elements:{Ca:1,C:1,O:3}},
+          {name:'Magnesium Sulfate',formula:'MgSO₄',elements:{Mg:1,S:1,O:4}},
+          {name:'Copper(II) Sulfate',formula:'CuSO₄',elements:{Cu:1,S:1,O:4}},
+          {name:'Iron(III) Oxide',formula:'Fe₂O₃',elements:{Fe:2,O:3}},
+        ]
+      },
+      {
+        group: 'Simple Organics',
+        molecules: [
+          {name:'Ethanol',formula:'C₂H₅OH',elements:{C:2,H:6,O:1}},
+          {name:'Glucose',formula:'C₆H₁₂O₆',elements:{C:6,H:12,O:6}},
+          {name:'Formaldehyde',formula:'CH₂O',elements:{C:1,H:2,O:1}},
+          {name:'Acetone',formula:'C₃H₆O',elements:{C:3,H:6,O:1}},
+          {name:'Benzene',formula:'C₆H₆',elements:{C:6,H:6}},
+        ]
+      }
+    ];
+    const moleculeListUl = document.getElementById('molecule-list-ul');
+    moleculeGroups.forEach((group, groupIdx) => {
+      const groupDiv = document.createElement('li');
+      groupDiv.className = 'collapsible-group';
+      const headerBtn = document.createElement('button');
+      headerBtn.className = 'collapsible-header';
+      headerBtn.textContent = group.group;
+      headerBtn.setAttribute('aria-expanded', 'true');
+      groupDiv.appendChild(headerBtn);
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'collapsible-content';
+      group.molecules.forEach((m,i) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span style="color:#48cae4;font-weight:700;cursor:pointer;">${m.formula}</span> <span style="color:#e0e0e0;">${m.name}</span> <span style="color:#ff3c7e;font-size:13px;">[${Object.entries(m.elements).map(([k,v])=>`${k}${v>1?v:''}`).join(', ')}]</span>`;
+        li.style.opacity = 0;
+        li.style.transform = 'translateY(20px)';
+        li.style.transition = 'opacity 0.5s, transform 0.5s';
+        li.style.cursor = 'pointer';
+        setTimeout(()=>{
+          li.style.opacity = 1;
+          li.style.transform = 'translateY(0)';
+        }, 100 + i*60);
+        // Click handler to auto-form molecule
+        li.onclick = function() {
+          // Clear vessel
+          vessel.innerHTML = '';
+          // Add correct elements
+          Object.entries(m.elements).forEach(([sym,count]) => {
+            for (let j=0;j<count;j++) {
+              const el = document.createElement('span');
+              el.textContent = sym;
+              el.className = 'element';
+              el.style.margin = '2px';
+              el.setAttribute('data-symbol', sym);
+              el.onclick = function() { el.remove(); };
+              vessel.appendChild(el);
+            }
+          });
+          // Start animation
+          renderMolecule3D(normalizeFormula(m.formula), true, m);
+        };
+        contentDiv.appendChild(li);
+      });
+      groupDiv.appendChild(contentDiv);
+      headerBtn.onclick = function() {
+        const expanded = headerBtn.getAttribute('aria-expanded') === 'true';
+        headerBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        headerBtn.classList.toggle('collapsed', expanded);
+        contentDiv.classList.toggle('collapsed', expanded);
+      };
+      moleculeListUl.appendChild(groupDiv);
+    });
+
+    // --- Reaction Vessel Drag & Drop ---
+    const vessel = document.getElementById('vessel-elements');
+    document.getElementById('reaction-vessel').ondragover = function(ev) { ev.preventDefault(); };
+    document.getElementById('reaction-vessel').ondrop = function(ev) {
+      ev.preventDefault();
+      let data = ev.dataTransfer.getData('text/plain');
+      let elementObj;
+      try {
+        elementObj = JSON.parse(data);
+      } catch {
+        // fallback for old symbol-only drag
+        elementObj = elements.find(e => e.symbol === data) || {symbol: data, name: data, color: '#fff'};
+      }
+      const el = document.createElement('span');
+      el.textContent = elementObj.symbol;
+      el.className = 'element';
+      el.style.margin = '2px';
+      el.style.background = elementObj.color;
+      el.style.color = '#222';
+      el.title = elementObj.name;
+      el.setAttribute('data-symbol', elementObj.symbol);
+      el.onclick = function() {
+        el.remove();
+      };
+      vessel.appendChild(el);
+    };
+
+    // --- Mix & React Button ---
+    // Add molecule celebration overlay if not present
+    if (!document.getElementById('molecule-celebrate')) {
+      const overlay = document.createElement('div');
+      overlay.id = 'molecule-celebrate';
+      overlay.style.cssText = `
+        position:fixed; left:0; top:0; width:100vw; height:100vh; z-index:1000; pointer-events:none;
+        display:none; align-items:center; justify-content:center;
+      `;
+      overlay.innerHTML = `
+        <div id="molecule-celebrate-inner" style="
+          font-size:5vw; color:#fff; font-weight:bold; text-shadow:0 0 40px #48cae4,0 0 80px #fff,0 0 10px #fff;
+          padding:40px 80px; border-radius:40px; background:rgba(20,30,50,0.85); box-shadow:0 0 80px #48cae4a0;
+          transform:scale(0.7); opacity:0; transition:all 0.7s cubic-bezier(.7,2,.3,1);
+          display:flex; flex-direction:column; align-items:center; gap:18px;">
+          <span id="molecule-celebrate-name"></span>
+          <span style="font-size:2vw; color:#ffe066; text-shadow:0 0 10px #fff;">Molecule Crafted!</span>
+        </div>
+        <canvas id="molecule-confetti" style="position:absolute;left:0;top:0;width:100vw;height:100vh;pointer-events:none;"></canvas>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    function showMoleculeCelebrate(name) {
+      const overlay = document.getElementById('molecule-celebrate');
+      const inner = document.getElementById('molecule-celebrate-inner');
+      const nameSpan = document.getElementById('molecule-celebrate-name');
+      nameSpan.textContent = name;
+      overlay.style.display = 'flex';
+      setTimeout(()=>{
+        inner.style.transform = 'scale(1.15)';
+        inner.style.opacity = '1';
+      }, 10);
+      // Confetti burst
+      launchConfetti();
+      setTimeout(()=>{
+        inner.style.transform = 'scale(0.7)';
+        inner.style.opacity = '0';
+        setTimeout(()=>{ overlay.style.display = 'none'; }, 700);
+      }, 2200);
+    }
+
+    // Simple confetti animation
+    function launchConfetti() {
+      const canvas = document.getElementById('molecule-confetti');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const confetti = [];
+      const colors = ['#48cae4','#ffe066','#fff200','#ff3c7e','#a3ffae','#b388ff','#e0c3fc'];
+      for (let i=0;i<80;i++) {
+        confetti.push({
+          x: Math.random()*canvas.width,
+          y: -20-Math.random()*100,
+          r: 8+Math.random()*12,
+          color: colors[Math.floor(Math.random()*colors.length)],
+          vy: 2+Math.random()*6,
+          vx: -2+Math.random()*4,
+          rot: Math.random()*Math.PI*2,
+          vr: -0.1+Math.random()*0.2
+        });
+      }
+      let frame = 0;
+      function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        confetti.forEach(c => {
+          ctx.save();
+          ctx.translate(c.x, c.y);
+          ctx.rotate(c.rot);
+          ctx.fillStyle = c.color;
+          ctx.beginPath();
+          ctx.ellipse(0,0,c.r*0.6,c.r,0,0,Math.PI*2);
+          ctx.fill();
+          ctx.restore();
+          c.x += c.vx;
+          c.y += c.vy;
+          c.rot += c.vr;
+        });
+        frame++;
+        if (frame < 60) requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    document.getElementById('mix-btn').onclick = function() {
+      // Parse elements in vessel
+      const vesselEls = Array.from(document.querySelectorAll('#vessel-elements .element'));
+      const counts = {};
+      vesselEls.forEach(el => {
+        const sym = el.getAttribute('data-symbol');
+        counts[sym] = (counts[sym]||0)+1;
+      });
+      // Vast molecule recognition (matches sidebar, normalized formula)
+      function normalizeFormula(formula) {
+        return formula.replace(/₂/g,'2').replace(/₃/g,'3').replace(/₄/g,'4').replace(/₅/g,'5').replace(/₆/g,'6').replace(/₇/g,'7').replace(/₈/g,'8').replace(/₉/g,'9');
+      }
+      let molecule = null;
+      let moleculeDef = null;
+      outer: for (const group of moleculeGroups) {
+        for (const m of group.molecules) {
+          let match = true;
+          for (const k in m.elements) {
+            if (counts[k] !== m.elements[k]) { match = false; break; }
+          }
+          // Check for extra elements
+          if (match && Object.keys(counts).length === Object.keys(m.elements).length) {
+            molecule = normalizeFormula(m.formula);
+            moleculeDef = m;
+            break outer;
+          }
+        }
+      }
+      if (molecule) {
+        showMoleculeCelebrate(molecule);
+        renderMolecule3D(molecule);
+      } else {
+        alert('No recognizable molecule formed. Try exact stoichiometry and combinations!');
+      }
+    };
+    document.getElementById('clear-btn').onclick = function() {
+      vessel.innerHTML = '';
+    };
+
+    // --- 3D Molecule Visualization ---
+    // Accepts molecule and optional isTeachingClick
+    function renderMolecule3D(molecule, isTeachingClick) {
+      const container = document.getElementById('molecule-3d');
+      while (container.firstChild) container.removeChild(container.firstChild);
+      if (window.moleculeAnimFrame) cancelAnimationFrame(window.moleculeAnimFrame);
+      // Remove old label sprites from previous scene if any
+      if (window.atomLabelSprites && Array.isArray(window.atomLabelSprites)) {
+        window.atomLabelSprites.forEach(sprite => {
+          if (sprite.parent && sprite.parent.remove) sprite.parent.remove(sprite);
+        });
+      }
+      window.atomLabelSprites = [];
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(container.offsetWidth, container.offsetHeight);
+      container.appendChild(renderer.domElement);
+      scene = new THREE.Scene();
+      scene.background = null;
+      camera = new THREE.PerspectiveCamera(45, container.offsetWidth/container.offsetHeight, 0.1, 100);
+      camera.position.set(0, 0, 8);
+      // Teaching overlay
+      let teachDiv = document.getElementById('teach-overlay');
+      if (!teachDiv) {
+        teachDiv = document.createElement('div');
+        teachDiv.id = 'teach-overlay';
+        teachDiv.style.cssText = `
+          position:fixed;
+          top:80px;
+          left:50%;
+          transform:translateX(-50%);
+          z-index:30;
+          background:rgba(20,30,50,0.65);
+          color:#fff;
+          padding:8px 18px;
+          border-radius:14px;
+          box-shadow:0 0 18px #48cae4a0;
+          font-size:15px;
+          max-width:340px;
+          pointer-events:auto;
+          transition:opacity 0.5s;
+          opacity:1;
+          display:flex;
+          align-items:center;
+        `;
+        // Responsive tweaks
+        teachDiv.setAttribute('style', teachDiv.style.cssText + '@media (max-width: 600px) { font-size:12px; padding:6px 8px; max-width:98vw; }');
+        // Add close button
+        const closeBtn = document.createElement('span');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.cssText = 'margin-left:12px;cursor:pointer;font-size:18px;font-weight:bold;color:#fff;background:rgba(255,255,255,0.08);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;';
+        closeBtn.onclick = function(e) { teachDiv.style.opacity = 0; e.stopPropagation(); };
+        teachDiv.appendChild(closeBtn);
+        document.body.appendChild(teachDiv);
+      }
+      function setTeaching(text) {
+        // Only update the text, keep the close button
+        teachDiv.childNodes[0] ? teachDiv.childNodes[0].remove() : null;
+        const textDiv = document.createElement('span');
+        textDiv.innerHTML = text;
+        teachDiv.insertBefore(textDiv, teachDiv.firstChild);
+        teachDiv.style.opacity = 1;
+      }
+      // If called from sidebar click, show extra teaching overlay
+      let moleculeDefArg = arguments[2];
+      if (isTeachingClick && moleculeDefArg) {
+        let explanation = `<b>${moleculeDefArg.name} (${moleculeDefArg.formula})</b><br>`;
+        explanation += `<span style='color:#48cae4;'>Chemistry:</span> This molecule forms when ${Object.entries(moleculeDefArg.elements).map(([sym,count])=>`${count>1?count+' ':''}${elements.find(e=>e.symbol===sym)?.name||sym}`).join(', ')} combine in exact proportions. Bonds form via electron sharing or transfer, following the rules of valence and electronegativity.<br>`;
+        explanation += `<span style='color:#ffe066;'>Physics:</span> Atoms interact through electromagnetic forces. Electrons rearrange, creating stable energy states and molecular orbitals. The animation shows atoms approaching, electron clouds merging, and bonds forming as cylinders, representing quantum mechanical interactions.<br>`;
+        explanation += `<span style='color:#a3ffae;'>Try removing or adding atoms to see how molecule recognition changes!</span>`;
+        setTeaching(explanation);
+      }
+      function hideTeaching() {
+        teachDiv.style.opacity = 0;
+      }
+      // Atoms and bonds for all recognized molecules
+      // Use colors directly from the periodic table data for perfect sync
+      function getElementColor(symbol) {
+        const el = elements.find(e => e.symbol === symbol);
+        if (!el) return 0xffffff;
+        // Convert hex string to integer for Three.js
+        return parseInt(el.color.replace('#',''), 16);
+      }
+      let atoms = [], bonds = [], initialAtoms = [];
+      // Dynamically scale atom radii to prevent overlap
+      function adjustAtomRadii(atoms, minDist=1.1) {
+        // --- Improved: Per-atom adaptive scaling to prevent any overlap ---
+        if (atoms.length < 2) return;
+        const margin = 0.18;
+        const bondRadius = 0.22;
+        for (let i = 0; i < atoms.length; i++) {
+          let a = atoms[i];
+          let minAtomDist = Infinity;
+          let minBondDist = Infinity;
+          // Atom-to-atom
+          for (let j = 0; j < atoms.length; j++) {
+            if (i === j) continue;
+            let dx = a.x - atoms[j].x;
+            let dy = a.y - atoms[j].y;
+            let dz = a.z - atoms[j].z;
+            let dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            if (dist < minAtomDist) minAtomDist = dist;
+          }
+          // Atom-to-bond (skip bonds this atom is part of)
+          if (typeof bonds !== 'undefined') {
+            for (let k = 0; k < bonds.length; k++) {
+              if (bonds[k].a === i || bonds[k].b === i) continue;
+              let b1 = atoms[bonds[k].a], b2 = atoms[bonds[k].b];
+              let vx = b2.x - b1.x, vy = b2.y - b1.y, vz = b2.z - b1.z;
+              let wx = a.x - b1.x, wy = a.y - b1.y, wz = a.z - b1.z;
+              let t = (vx*wx + vy*wy + vz*wz) / (vx*vx + vy*vy + vz*vz);
+              t = Math.max(0, Math.min(1, t));
+              let px = b1.x + t*vx, py = b1.y + t*vy, pz = b1.z + t*vz;
+              let dist = Math.sqrt((a.x-px)**2 + (a.y-py)**2 + (a.z-pz)**2);
+              if (dist < minBondDist) minBondDist = dist;
+            }
+          }
+          // For atom-atom, max radius is (minAtomDist - margin) / 2
+          let maxR1 = (minAtomDist - margin) / 2;
+          // For atom-bond, max radius is (minBondDist - bondRadius - margin)
+          let maxR2 = (minBondDist !== Infinity) ? (minBondDist - bondRadius - margin) : Infinity;
+          let maxR = Math.max(0.3, Math.min(a.r, maxR1, maxR2));
+          a.r = Math.max(0.3, maxR);
+        }
+      }
+      // Find molecule definition from sidebar
+      let moleculeDef = null;
+      for (const group of moleculeGroups) {
+        for (const m of group.molecules) {
+          if (normalizeFormula(m.formula) === molecule) {
+            moleculeDef = m;
+            break;
+          }
+        }
+        if (moleculeDef) break;
+      }
+      if (moleculeDef) {
+        // Build atom list from elements
+        const atomRadii = {H:0.7,O:1.1,C:1.0,N:1.0,Na:1.0,Cl:1.1,S:1.1,Fe:1.1,Cu:1.0,Mg:1.0,P:1.0,K:1.0,Ca:1.1};
+        let atomList = [];
+        Object.entries(moleculeDef.elements).forEach(([sym,count]) => {
+          for (let i=0;i<count;i++) atomList.push(sym);
+        });
+        // --- Chemistry-accurate geometries ---
+        if (molecule === 'H2O') {
+          // Water: bent, 104.5°
+          const angle = 104.5 * Math.PI / 180;
+          atoms = [
+            {symbol:'O',x:0,y:0,z:0,r:atomRadii['O']},
+            {symbol:'H',x:Math.sin(angle/2)*1.5,y:Math.cos(angle/2)*1.5,z:0,r:atomRadii['H']},
+            {symbol:'H',x:-Math.sin(angle/2)*1.5,y:Math.cos(angle/2)*1.5,z:0,r:atomRadii['H']}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2}];
+          initialAtoms = [
+            {symbol:'O',x:0,y:-4,z:0,r:atomRadii['O']},
+            {symbol:'H',x:4,y:4,z:0,r:atomRadii['H']},
+            {symbol:'H',x:-4,y:4,z:0,r:atomRadii['H']}
+          ];
+        } else if (molecule === 'CH4') {
+          // Methane: tetrahedral, 109.5°
+          const tetra = [
+            [1,1,1],
+            [-1,-1,1],
+            [-1,1,-1],
+            [1,-1,-1]
+          ];
+          atoms = [
+            {symbol:'C',x:0,y:0,z:0,r:atomRadii['C']},
+            ...tetra.map(([x,y,z]) => ({symbol:'H',x:x*1.3,y:y*1.3,z:z*1.3,r:atomRadii['H']}))
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2},{a:0,b:3},{a:0,b:4}];
+          initialAtoms = [
+            {symbol:'C',x:0,y:-4,z:0,r:atomRadii['C']},
+            {symbol:'H',x:4,y:4,z:0,r:atomRadii['H']},
+            {symbol:'H',x:-4,y:4,z:0,r:atomRadii['H']},
+            {symbol:'H',x:4,y:-4,z:0,r:atomRadii['H']},
+            {symbol:'H',x:-4,y:-4,z:0,r:atomRadii['H']}
+          ];
+        } else if (molecule === 'NH3') {
+          // Ammonia: trigonal pyramidal, ~107°
+          const angle = 107 * Math.PI / 180;
+          atoms = [
+            {symbol:'N',x:0,y:0,z:0,r:atomRadii['N']},
+            {symbol:'H',x:Math.sin(angle/2)*1.5,y:Math.cos(angle/2)*1.5,z:0,r:atomRadii['H']},
+            {symbol:'H',x:-Math.sin(angle/2)*1.5,y:Math.cos(angle/2)*1.5,z:0,r:atomRadii['H']},
+            {symbol:'H',x:0,y:-1.5,z:0,r:atomRadii['H']}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2},{a:0,b:3}];
+          initialAtoms = [
+            {symbol:'N',x:0,y:-4,z:0,r:atomRadii['N']},
+            {symbol:'H',x:4,y:4,z:0,r:atomRadii['H']},
+            {symbol:'H',x:-4,y:4,z:0,r:atomRadii['H']},
+            {symbol:'H',x:0,y:4,z:0,r:atomRadii['H']}
+          ];
+        } else if (molecule === 'CO2') {
+          // Carbon dioxide: linear
+          atoms = [
+            {symbol:'C',x:0,y:0,z:0,r:atomRadii['C']},
+            {symbol:'O',x:-2,y:0,z:0,r:atomRadii['O']},
+            {symbol:'O',x:2,y:0,z:0,r:atomRadii['O']}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2}];
+          initialAtoms = [
+            {symbol:'C',x:0,y:-4,z:0,r:atomRadii['C']},
+            {symbol:'O',x:-4,y:4,z:0,r:atomRadii['O']},
+            {symbol:'O',x:4,y:4,z:0,r:atomRadii['O']}
+          ];
+        } else if (molecule === 'SO2') {
+          // Sulfur dioxide: bent, ~120°
+          const angle = 120 * Math.PI / 180;
+          atoms = [
+            {symbol:'S',x:0,y:0,z:0,r:atomRadii['S']},
+            {symbol:'O',x:Math.sin(angle/2)*1.6,y:Math.cos(angle/2)*1.6,z:0,r:atomRadii['O']},
+            {symbol:'O',x:-Math.sin(angle/2)*1.6,y:Math.cos(angle/2)*1.6,z:0,r:atomRadii['O']}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2}];
+          initialAtoms = [
+            {symbol:'S',x:0,y:-4,z:0,r:atomRadii['S']},
+            {symbol:'O',x:4,y:4,z:0,r:atomRadii['O']},
+            {symbol:'O',x:-4,y:4,z:0,r:atomRadii['O']}
+          ];
+        } else if (molecule === 'C6H6') {
+          // Benzene: planar hexagonal ring
+          atoms = [];
+          for (let i=0;i<6;i++) {
+            atoms.push({symbol:'C',x:Math.cos(i*Math.PI/3)*2.2,y:Math.sin(i*Math.PI/3)*2.2,z:0,r:atomRadii['C']});
+          }
+          for (let i=0;i<6;i++) {
+            atoms.push({symbol:'H',x:Math.cos(i*Math.PI/3)*3.2,y:Math.sin(i*Math.PI/3)*3.2,z:0,r:atomRadii['H']});
+          }
+          bonds = [];
+          for (let i=0;i<6;i++) {
+            bonds.push({a:i,b:(i+1)%6});
+            bonds.push({a:i,b:i+6});
+          }
+          initialAtoms = atoms.map((a,i) => ({symbol:a.symbol,x:a.x*2,y:-6+Math.random()*2,z:0,r:a.r}));
+        } else if (atomList.length === 2) {
+          // Diatomic: linear
+          atoms = [
+            {symbol:atomList[0],x:-1.2,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:1.2,y:0,z:0,r:atomRadii[atomList[1]]||1.0}
+          ];
+          bonds = [{a:0,b:1}];
+          initialAtoms = [
+            {symbol:atomList[0],x:-4,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:4,y:0,z:0,r:atomRadii[atomList[1]]||1.0}
+          ];
+        } else if (atomList.length === 3) {
+          // Triatomic: bent by default
+          atoms = [
+            {symbol:atomList[0],x:0,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:1.7,y:1,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-1.7,y:1,z:0,r:atomRadii[atomList[2]]||1.0}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2}];
+          initialAtoms = [
+            {symbol:atomList[0],x:0,y:-4,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:4,y:4,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-4,y:4,z:0,r:atomRadii[atomList[2]]||1.0}
+          ];
+        } else if (atomList.length === 4) {
+          // Tetrahedral or trigonal planar
+          atoms = [
+            {symbol:atomList[0],x:0,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:1.7,y:1,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-1.7,y:1,z:0,r:atomRadii[atomList[2]]||1.0},
+            {symbol:atomList[3],x:0,y:-1.7,z:0,r:atomRadii[atomList[3]]||1.0}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2},{a:0,b:3}];
+          initialAtoms = [
+            {symbol:atomList[0],x:0,y:-4,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:4,y:4,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-4,y:4,z:0,r:atomRadii[atomList[2]]||1.0},
+            {symbol:atomList[3],x:0,y:4,z:0,r:atomRadii[atomList[3]]||1.0}
+          ];
+        } else if (molecule === 'C2H5OH') {
+          // Ethanol: scaled and centered for better 3D fit
+          const scale = 0.7;
+          atoms = [
+            {symbol:'C',x:-1.1*scale,y:0,z:0,r:atomRadii['C']}, // C1
+            {symbol:'C',x:0.6*scale,y:0,z:0,r:atomRadii['C']},  // C2
+            {symbol:'O',x:1.7*scale,y:0.6*scale,z:0.4*scale,r:atomRadii['O']}, // O
+            {symbol:'H',x:-1.7*scale,y:0.7*scale,z:0.6*scale,r:atomRadii['H']}, // H on C1
+            {symbol:'H',x:-1.7*scale,y:-0.7*scale,z:-0.6*scale,r:atomRadii['H']}, // H on C1
+            {symbol:'H',x:-1.1*scale,y:0,z:0.9*scale,r:atomRadii['H']}, // H on C1
+            {symbol:'H',x:0.6*scale,y:0,z:0.9*scale,r:atomRadii['H']}, // H on C2
+            {symbol:'H',x:0.6*scale,y:0.7*scale,z:-0.6*scale,r:atomRadii['H']}, // H on C2
+            {symbol:'H',x:0.6*scale,y:-0.7*scale,z:-0.6*scale,r:atomRadii['H']}, // H on C2
+            {symbol:'H',x:2.1*scale,y:1.0*scale,z:0.5*scale,r:atomRadii['H']} // H on O
+          ];
+          adjustAtomRadii(atoms);
+          bonds = [
+            {a:0,b:1},{a:1,b:2}, // backbone
+            {a:0,b:3},{a:0,b:4},{a:0,b:5}, // C1 H's
+            {a:1,b:6},{a:1,b:7},{a:1,b:8}, // C2 H's
+            {a:2,b:9} // O-H
+          ];
+          initialAtoms = atoms.map((a,i) => ({symbol:a.symbol,x:a.x*2,y:-6+Math.random()*2,z:a.z,r:a.r}));
+        } else if (molecule === 'CH3COOH') {
+          // Acetic acid: scaled and centered for better 3D fit
+          const scale = 0.7;
+          atoms = [
+            {symbol:'C',x:-1.1*scale,y:0,z:0,r:atomRadii['C']}, // methyl C
+            {symbol:'C',x:0.6*scale,y:0,z:0,r:atomRadii['C']},  // carboxyl C
+            {symbol:'O',x:1.7*scale,y:0.7*scale,z:0,r:atomRadii['O']}, // double bonded O
+            {symbol:'O',x:1.7*scale,y:-0.7*scale,z:0,r:atomRadii['O']}, // single bonded O
+            {symbol:'H',x:2.1*scale,y:-1.2*scale,z:0.4*scale,r:atomRadii['H']}, // H on single bonded O
+            {symbol:'H',x:-1.7*scale,y:0.7*scale,z:0.6*scale,r:atomRadii['H']}, // methyl H
+            {symbol:'H',x:-1.7*scale,y:-0.7*scale,z:-0.6*scale,r:atomRadii['H']}, // methyl H
+            {symbol:'H',x:-1.1*scale,y:0,z:0.9*scale,r:atomRadii['H']} // methyl H
+          ];
+          adjustAtomRadii(atoms);
+          bonds = [
+            {a:0,b:1}, // C-C
+            {a:1,b:2},{a:1,b:3}, // C=O, C-O
+            {a:3,b:4}, // O-H
+            {a:0,b:5},{a:0,b:6},{a:0,b:7} // methyl H's
+          ];
+          initialAtoms = atoms.map((a,i) => ({symbol:a.symbol,x:a.x*2,y:-6+Math.random()*2,z:a.z,r:a.r}));
+        } else if (molecule === 'C3H6O') {
+          // Acetone: scaled and centered for better 3D fit
+          const scale = 0.7;
+          atoms = [
+            {symbol:'C',x:-1.6*scale,y:0,z:0,r:atomRadii['C']},
+            {symbol:'C',x:0,y:0,z:0,r:atomRadii['C']},
+            {symbol:'C',x:1.6*scale,y:0,z:0,r:atomRadii['C']},
+            {symbol:'O',x:0,y:0.9*scale,z:0.5*scale,r:atomRadii['O']},
+            {symbol:'H',x:-2.1*scale,y:0.7*scale,z:0.6*scale,r:atomRadii['H']},
+            {symbol:'H',x:-2.1*scale,y:-0.7*scale,z:-0.6*scale,r:atomRadii['H']},
+            {symbol:'H',x:-1.6*scale,y:0,z:0.9*scale,r:atomRadii['H']},
+            {symbol:'H',x:2.1*scale,y:0.7*scale,z:0.6*scale,r:atomRadii['H']},
+            {symbol:'H',x:2.1*scale,y:-0.7*scale,z:-0.6*scale,r:atomRadii['H']},
+            {symbol:'H',x:1.6*scale,y:0,z:0.9*scale,r:atomRadii['H']}
+          ];
+          adjustAtomRadii(atoms);
+          bonds = [
+            {a:0,b:1},{a:1,b:2}, // backbone
+            {a:1,b:3}, // C=O
+            {a:0,b:4},{a:0,b:5},{a:0,b:6}, // left H's
+            {a:2,b:7},{a:2,b:8},{a:2,b:9} // right H's
+          ];
+          initialAtoms = atoms.map((a,i) => ({symbol:a.symbol,x:a.x*2,y:-6+Math.random()*2,z:a.z,r:a.r}));
+        } else if (molecule === 'CH2O') {
+          // Formaldehyde: scaled and centered for better 3D fit
+          const scale = 0.7;
+          atoms = [
+            {symbol:'C',x:0,y:0,z:0,r:atomRadii['C']},
+            {symbol:'O',x:1.1*scale,y:0,z:0.5*scale,r:atomRadii['O']},
+            {symbol:'H',x:-0.9*scale,y:0.7*scale,z:0.5*scale,r:atomRadii['H']},
+            {symbol:'H',x:-0.9*scale,y:-0.7*scale,z:-0.5*scale,r:atomRadii['H']}
+          ];
+          adjustAtomRadii(atoms);
+          bonds = [
+            {a:0,b:1},{a:0,b:2},{a:0,b:3}
+          ];
+          initialAtoms = atoms.map((a,i) => ({symbol:a.symbol,x:a.x*2,y:-6+Math.random()*2,z:a.z,r:a.r}));
+        } else if (molecule === 'C6H12O6') {
+          // Glucose: scaled and centered for better 3D fit
+          const scale = 0.6;
+          atoms = [];
+          // C backbone zig-zag
+          for (let i=0;i<6;i++) {
+            atoms.push({symbol:'C',x:(i*1.1-3)*scale,y:(i%2===0?0:0.5)*scale,z:0,r:atomRadii['C']});
+          }
+          // O's
+          atoms.push({symbol:'O',x:-3*scale,y:0.9*scale,z:0.5*scale,r:atomRadii['O']}); // O1
+          atoms.push({symbol:'O',x:3*scale,y:0.9*scale,z:0.5*scale,r:atomRadii['O']}); // O6
+          // Add H's
+          for (let i=0;i<6;i++) {
+            atoms.push({symbol:'H',x:(i*1.1-3)*scale,y:0.9*scale,z:1.0*scale*(i%2===0?1:-1),r:atomRadii['H']});
+            atoms.push({symbol:'H',x:(i*1.1-3)*scale,y:-0.9*scale,z:-1.0*scale*(i%2===0?1:-1),r:atomRadii['H']});
+          }
+          adjustAtomRadii(atoms);
+          // Add bonds
+          bonds = [];
+          for (let i=0;i<5;i++) bonds.push({a:i,b:i+1}); // C backbone
+          bonds.push({a:0,b:6}); // C1-O1
+          bonds.push({a:5,b:7}); // C6-O6
+          let hIdx = 8;
+          for (let i=0;i<6;i++) {
+            bonds.push({a:i,b:hIdx}); hIdx++;
+            bonds.push({a:i,b:hIdx}); hIdx++;
+          }
+          initialAtoms = atoms.map((a,i) => ({symbol:a.symbol,x:a.x*2,y:-6+Math.random()*2,z:a.z,r:a.r}));
+        } else if (atomList.length >= 5 && atomList.length <= 8) {
+          // Zig-zag chain (not flat)
+          atoms = atomList.map((sym,i) => ({
+            symbol:sym,
+            x:Math.cos(i*Math.PI/4)*2.2,
+            y:Math.sin(i*Math.PI/4)*1.2,
+            z:(i%2===0?0:0.7),
+            r:atomRadii[sym]||1.0
+          }));
+          bonds = [];
+          for (let i=0;i<atomList.length-1;i++) bonds.push({a:i,b:i+1});
+          initialAtoms = atomList.map((sym,i) => ({
+            symbol:sym,
+            x:(i-atomList.length/2)*2.5,
+            y:-4+Math.random()*2,
+            z:0,
+            r:atomRadii[sym]||1.0
+          }));
+        } else if (atomList.length === 2) {
+          // Diatomic: linear
+          atoms = [
+            {symbol:atomList[0],x:-1.2,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:1.2,y:0,z:0,r:atomRadii[atomList[1]]||1.0}
+          ];
+          bonds = [{a:0,b:1}];
+          initialAtoms = [
+            {symbol:atomList[0],x:-4,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:4,y:0,z:0,r:atomRadii[atomList[1]]||1.0}
+          ];
+        } else if (atomList.length === 3) {
+          // Triatomic: bent by default
+          atoms = [
+            {symbol:atomList[0],x:0,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:1.7,y:1,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-1.7,y:1,z:0,r:atomRadii[atomList[2]]||1.0}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2}];
+          initialAtoms = [
+            {symbol:atomList[0],x:0,y:-4,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:4,y:4,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-4,y:4,z:0,r:atomRadii[atomList[2]]||1.0}
+          ];
+        } else if (atomList.length === 4) {
+          // Tetrahedral or trigonal planar
+          atoms = [
+            {symbol:atomList[0],x:0,y:0,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:1.7,y:1,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-1.7,y:1,z:0,r:atomRadii[atomList[2]]||1.0},
+            {symbol:atomList[3],x:0,y:-1.7,z:0,r:atomRadii[atomList[3]]||1.0}
+          ];
+          bonds = [{a:0,b:1},{a:0,b:2},{a:0,b:3}];
+          initialAtoms = [
+            {symbol:atomList[0],x:0,y:-4,z:0,r:atomRadii[atomList[0]]||1.0},
+            {symbol:atomList[1],x:4,y:4,z:0,r:atomRadii[atomList[1]]||1.0},
+            {symbol:atomList[2],x:-4,y:4,z:0,r:atomRadii[atomList[2]]||1.0},
+            {symbol:atomList[3],x:0,y:4,z:0,r:atomRadii[atomList[3]]||1.0}
+          ];
+        } else if (atomList.length >= 5 && atomList.length <= 8) {
+          // Zig-zag chain
+          atoms = atomList.map((sym,i) => ({
+            symbol:sym,
+            x:Math.cos(i*Math.PI/4)*2.2,
+            y:Math.sin(i*Math.PI/4)*1.2,
+            z:(i%2===0?0:0.7),
+            r:atomRadii[sym]||1.0
+          }));
+          bonds = [];
+          for (let i=0;i<atomList.length-1;i++) bonds.push({a:i,b:i+1});
+          initialAtoms = atomList.map((sym,i) => ({
+            symbol:sym,
+            x:(i-atomList.length/2)*2.5,
+            y:-4+Math.random()*2,
+            z:0,
+            r:atomRadii[sym]||1.0
+          }));
+        } else if (molecule==='C6H6') {
+          // Benzene ring
+          atoms = [];
+          for (let i=0;i<6;i++) {
+            atoms.push({symbol:'C',x:Math.cos(i*Math.PI/3)*2.2,y:Math.sin(i*Math.PI/3)*2.2,z:0,r:atomRadii['C']});
+          }
+          for (let i=0;i<6;i++) {
+            atoms.push({symbol:'H',x:Math.cos(i*Math.PI/3)*3.2,y:Math.sin(i*Math.PI/3)*3.2,z:0,r:atomRadii['H']});
+          }
+          bonds = [];
+          for (let i=0;i<6;i++) {
+            bonds.push({a:i,b:(i+1)%6});
+            bonds.push({a:i,b:i+6});
+          }
+          initialAtoms = atoms.map((a,i) => ({symbol:a.symbol,x:a.x*2,y:-6+Math.random()*2,z:0,r:a.r}));
+        } else {
+          // Fallback: arrange in a circle
+          atoms = atomList.map((sym,i) => ({
+            symbol:sym,
+            x:Math.cos(i*2*Math.PI/atomList.length)*2.2,
+            y:Math.sin(i*2*Math.PI/atomList.length)*2.2,
+            z:0,
+            r:atomRadii[sym]||1.0
+          }));
+          bonds = [];
+          for (let i=0;i<atomList.length-1;i++) bonds.push({a:i,b:i+1});
+          initialAtoms = atomList.map((sym,i) => ({
+            symbol:sym,
+            x:(i-atomList.length/2)*2.5,
+            y:-4+Math.random()*2,
+            z:0,
+            r:atomRadii[sym]||1.0
+          }));
+        }
+      } else {
+        // fallback: show a single atom
+        atoms = [{symbol:molecule,x:0,y:0,z:0,r:1.0}];
+        bonds = [];
+        initialAtoms = [{symbol:molecule,x:0,y:-4,z:0,r:1.0}];
+      }
+      // --- Step-by-step Realistic Animation with Electron Transfer (Refactored) ---
+      let meshes = [];
+      let electronClouds = [];
+      // Use a group for molecule so we can rotate only the molecule
+      const moleculeGroup = new THREE.Group();
+      initialAtoms.forEach((a,i) => {
+        const geo = new THREE.SphereGeometry(a.r,32,32);
+        const color = getElementColor(a.symbol);
+        const mat = new THREE.MeshPhongMaterial({color:color, shininess:80});
+        const mesh = new THREE.Mesh(geo,mat);
+        mesh.position.set(a.x,a.y,a.z);
+        moleculeGroup.add(mesh);
+        meshes.push(mesh);
+        // Add element symbol as a sprite label (always faces camera, just above surface)
+        const labelCanvas = document.createElement('canvas');
+        labelCanvas.width = 256; labelCanvas.height = 256;
+        const lctx = labelCanvas.getContext('2d');
+        lctx.clearRect(0,0,256,256);
+        lctx.font = 'bold 120px Arial';
+        lctx.textAlign = 'center';
+        lctx.textBaseline = 'middle';
+        lctx.lineWidth = 12;
+        lctx.strokeStyle = '#222';
+        lctx.strokeText(a.symbol, 128, 140);
+        lctx.fillStyle = '#fff';
+        lctx.fillText(a.symbol, 128, 140);
+        const labelTexture = new THREE.CanvasTexture(labelCanvas);
+        const spriteMat = new THREE.SpriteMaterial({ 
+          map: labelTexture, 
+          transparent: true, 
+          depthTest: false, 
+          depthWrite: false
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.center.set(0.5,0.5);
+        sprite.scale.set(a.r*1.1, a.r*1.1, 1);
+        sprite.userData = { atomIndex: i, atomRadius: a.r };
+        sprite.position.set(a.x, a.y, a.z); // will be updated each frame
+        sprite.renderOrder = 9999; // ensure labels render after spheres
+        moleculeGroup.add(sprite);
+        if (!window.atomLabelSprites) window.atomLabelSprites = [];
+        window.atomLabelSprites.push(sprite);
+        // Electron cloud (glow)
+        const cloudGeo = new THREE.SphereGeometry(a.r*1.25,24,24);
+        const cloudMat = new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.18});
+        const cloud = new THREE.Mesh(cloudGeo,cloudMat);
+        cloud.position.set(a.x,a.y,a.z);
+        moleculeGroup.add(cloud);
+        electronClouds.push(cloud);
+      });
+      scene.add(moleculeGroup);
+      // Lighting
+      scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+      const pointLight = new THREE.PointLight(0x48cae4, 1.2, 10);
+      pointLight.position.set(2, 2, 3);
+      scene.add(pointLight);
+      // Animation steps
+      let step = 0; // 0: approach, 1: electron transfer, 2: bond, 3: rotate
+      let t = 0;
+      let bondT = 0;
+      let bondMeshes = [];
+      let electronCloudMeshes = [];
+      let electronTransfers = [];
+      let lastTimestamp = null;
+      function animate(ts) {
+        // Ensure label sprites always face the camera and follow atom positions
+        if (window.atomLabelSprites && meshes && window.atomLabelSprites.length === meshes.length && camera) {
+          for (let i=0; i<meshes.length; ++i) {
+            const mesh = meshes[i];
+            const sprite = window.atomLabelSprites[i];
+            // Place the label just above the atom surface, but not so far it floats; use a small offset
+            const atomPos = mesh.position.clone();
+            const camDir = camera.position.clone().sub(atomPos).normalize();
+            const offset = camDir.multiplyScalar(sprite.userData.atomRadius * 0.18); // minimal offset
+            sprite.position.copy(atomPos.add(offset));
+          }
+        }
+        if (!lastTimestamp) lastTimestamp = ts;
+        const dt = Math.min((ts-lastTimestamp)/1000,0.05); // seconds, capped for slow frames
+        lastTimestamp = ts;
+        if (step === 0) {
+          // Step 1: Atoms approach
+          setTeaching('<b>Step 1: Atoms Approach</b><br>Atoms move into position, ready to interact. Notice their colors and sizes, representing different elements.');
+          t = Math.min(t+dt*2,1);
+          meshes.forEach((mesh,i) => {
+            const start = initialAtoms[i];
+            const end = atoms[i];
+            let tt = t < 1 ? t*0.9 : 0.9;
+            mesh.position.x = start.x + (end.x-start.x)*tt;
+            mesh.position.y = start.y + (end.y-start.y)*tt;
+            mesh.position.z = start.z + (end.z-start.z)*tt;
+            electronClouds[i].position.copy(mesh.position);
+          });
+          renderer.render(scene, camera);
+          if (t>=1) {
+            setTeaching('<b>Step 2: Electron Sharing/Transfer</b><br>Atoms interact, sharing or transferring electrons to form chemical bonds. Watch the glowing clouds and yellow spheres representing electron movement.');
+            bonds.forEach(b => {
+              const a1 = meshes[b.a].position;
+              const a2 = meshes[b.b].position;
+              const cloudGeo = new THREE.SphereGeometry(0.55,16,16);
+              const cloudMat = new THREE.MeshBasicMaterial({color:0x48cae4,transparent:true,opacity:0.18});
+              const cloud = new THREE.Mesh(cloudGeo,cloudMat);
+              cloud.position.set((a1.x+a2.x)/2,(a1.y+a2.y)/2,(a1.z+a2.z)/2);
+              moleculeGroup.add(cloud);
+              electronCloudMeshes.push(cloud);
+              const etGeo = new THREE.SphereGeometry(0.22,12,12);
+              const etMat = new THREE.MeshBasicMaterial({color:0xfff200,transparent:true,opacity:0.85});
+              const et = new THREE.Mesh(etGeo,etMat);
+              et.position.copy(a1);
+              moleculeGroup.add(et);
+              electronTransfers.push({mesh:et,from:a1.clone(),to:a2.clone()});
+            });
+            t = 0;
+            step = 1;
+          }
+        } else if (step === 1) {
+          // Step 2: Electron transfer effect
+          t = Math.min(t+dt*2,1);
+          electronCloudMeshes.forEach(cloud => {
+            cloud.material.opacity = 0.18 + 0.22*Math.sin(t*Math.PI);
+            cloud.scale.set(1+0.2*Math.sin(t*Math.PI),1+0.2*Math.sin(t*Math.PI),1+0.2*Math.sin(t*Math.PI));
+          });
+          electronTransfers.forEach(et => {
+            et.mesh.position.lerpVectors(et.from, et.to, t);
+            et.mesh.material.opacity = 0.85 - 0.7*t;
+          });
+          renderer.render(scene, camera);
+          if (t>=1) {
+            setTeaching('<b>Step 3: Bond Formation</b><br>Chemical bonds form between atoms. Bonds are shown as glowing cylinders connecting atoms.');
+            electronCloudMeshes.forEach(cloud => moleculeGroup.remove(cloud));
+            electronCloudMeshes = [];
+            electronTransfers.forEach(et => moleculeGroup.remove(et.mesh));
+            electronTransfers = [];
+            meshes.forEach((mesh,i) => {
+              const end = atoms[i];
+              mesh.position.x = end.x;
+              mesh.position.y = end.y;
+              mesh.position.z = end.z;
+              electronClouds[i].position.copy(mesh.position);
+            });
+            bonds.forEach(b => {
+              const a1 = atoms[b.a], a2 = atoms[b.b];
+              const dir = new THREE.Vector3(a2.x-a1.x,a2.y-a1.y,a2.z-a1.z);
+              const len = dir.length();
+              // Create bond with correct length, animate scale.y from 0 to 1
+              const bondGeo = new THREE.CylinderGeometry(0.22,0.22,len,24);
+              const bondMat = new THREE.MeshPhongMaterial({color:0x48cae4,emissive:0x48cae4,emissiveIntensity:0.5});
+              const bond = new THREE.Mesh(bondGeo,bondMat);
+              bond.position.set((a1.x+a2.x)/2,(a1.y+a2.y)/2,(a1.z+a2.z)/2);
+              bond.lookAt(a2.x,a2.y,a2.z);
+              bond.scale.set(1,0,1); // start invisible
+              moleculeGroup.add(bond);
+              bondMeshes.push({mesh:bond,len:len});
+            });
+            t = 0;
+            bondT = 0;
+            step = 2;
+          }
+        } else if (step === 2) {
+          // Step 3: Bond formation
+          bondT = Math.min(bondT+dt*3,1);
+          bondMeshes.forEach(bm => {
+            bm.mesh.scale.set(1, bondT, 1);
+            bm.mesh.material.opacity = 0.7 + 0.3*Math.sin(bondT*Math.PI);
+            bm.mesh.material.emissiveIntensity = 0.5 + 0.5*Math.sin(bondT*Math.PI);
+          });
+          renderer.render(scene, camera);
+          if (bondT>=1) {
+            setTeaching('<b>Step 4: Final Molecule</b><br>The molecule is complete! Atoms are bonded, and the molecule gently rotates for inspection. Try dragging to rotate and zoom for a closer look.');
+            step = 3;
+          }
+        } else if (step === 3) {
+          // Step 4: Final molecule gentle rotation
+          moleculeGroup.rotation.y += dt*0.5;
+          electronClouds.forEach((cloud,i) => {
+            cloud.material.opacity = 0.18 + 0.12*Math.abs(Math.sin(ts/400+i));
+          });
+          bondMeshes.forEach((bm,i) => {
+            bm.mesh.material.emissiveIntensity = 0.7 + 0.2*Math.sin(ts/300+i);
+          });
+          renderer.render(scene, camera);
+        }
+        window.moleculeAnimFrame = requestAnimationFrame(animate);
+      }
+      window.moleculeAnimFrame = requestAnimationFrame(animate);
+    }
+  </script>
+</body>
+</html>

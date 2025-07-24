@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Electron Explorer</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 60% 40%,#101a2b 70%,#1a2233 100%);
+      color: #e0e0e0;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      overflow: hidden;
+    }
+    #main {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      position: relative;
+    }
+    #model {
+      width: 520px;
+      height: 520px;
+      background: rgba(10,20,40,0.7);
+      border-radius: 50%;
+      box-shadow: 0 0 48px #48cae4 inset, 0 0 80px #48cae4a0;
+      position: relative;
+      overflow: visible;
+    }
+    #particle-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #teach {
+      margin-left: 48px;
+      max-width: 520px;
+      background: rgba(20,30,50,0.85);
+      border-radius: 24px;
+      box-shadow: 0 0 32px #48cae4a0;
+      padding: 32px 28px;
+      backdrop-filter: blur(8px);
+      position: relative;
+      z-index: 2;
+    }
+    h1, h2 {
+      color: #48cae4;
+      margin-top: 0;
+      text-shadow: 0 0 18px #48cae4a0;
+    }
+    .orbital-btn {
+      margin-right: 12px;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg,#48cae4 60%,#1a2233 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 22px;
+      font-size: 17px;
+      font-weight: 600;
+      box-shadow: 0 0 18px #48cae4a0;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, box-shadow 0.3s, transform 0.2s;
+    }
+    .orbital-btn:hover {
+      background: linear-gradient(90deg,#1a2233 60%,#48cae4 100%);
+      color: #48cae4;
+      box-shadow: 0 0 28px #48cae4a0;
+      transform: scale(1.08);
+    }
+    #back {
+      margin-top: 38px;
+      background: #48cae4;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 0 18px #48cae4a0;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, box-shadow 0.3s, transform 0.2s;
+    }
+    #back:hover {
+      background: #1a2233;
+      color: #48cae4;
+      box-shadow: 0 0 28px #48cae4a0;
+      transform: scale(1.08);
+    }
+    .toggle-group {
+      margin-top: 18px;
+      display: flex;
+      gap: 18px;
+      align-items: center;
+    }
+    .toggle-label {
+      font-size: 15px;
+      color: #48cae4;
+      font-weight: 500;
+      margin-right: 8px;
+    }
+    .toggle-switch {
+      width: 44px; height: 24px;
+      background: #1a2233;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 0 8px #48cae4a0;
+      transition: background 0.2s;
+    }
+    .toggle-switch.active {
+      background: #48cae4;
+    }
+    .toggle-knob {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #48cae4a0;
+      transition: left 0.2s;
+    }
+    .toggle-switch.active .toggle-knob {
+      left: 22px;
+      background: #1a2233;
+    }
+    @media (max-width: 900px) {
+      #main { flex-direction: column; height: auto; }
+      #teach { margin-left: 0; margin-top: 32px; }
+      #model { margin-bottom: 24px; }
+    }
+    @media (max-width: 600px) {
+      #model { width: 98vw; height: 60vw; min-height: 320px; }
+      #teach { max-width: 98vw; padding: 18px 8vw; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particle-bg"></canvas>
+  <div id="main">
+    <div id="model"></div>
+    <div id="teach">
+      <h1>The Electron</h1>
+      <p style="font-size:18px;line-height:1.6;">Electrons are quantum particles described by wavefunctions. Their position is a probability cloud, not a fixed orbit. <span style="color:#fff200;font-weight:600;">This is a theoretical probability cloud, not a direct image.</span><br><br>
+      <span style="color:#48cae4;font-weight:600;">Try toggling phase, cutaway, and spin to explore quantum features!</span></p>
+      <div class="toggle-group">
+        <span class="toggle-label">Phase</span>
+        <div id="phase-toggle" class="toggle-switch"><div class="toggle-knob"></div></div>
+        <span class="toggle-label">Cutaway</span>
+        <div id="cutaway-toggle" class="toggle-switch"><div class="toggle-knob"></div></div>
+        <span class="toggle-label">Spin</span>
+        <div id="spin-toggle" class="toggle-switch"><div class="toggle-knob"></div></div>
+      </div>
+      <div style="margin-top:18px;font-size:15px;color:#e0e0e0;">
+        <b>Quantum Numbers:</b>
+        <select id="n-select"></select>
+        <select id="l-select"></select>
+        <select id="ml-select"></select>
+        <select id="ms-select"></select>
+      </div>
+      <ul style="font-size:16px;line-height:1.7;margin-top:18px;">
+        <li><b>Charge:</b> -1e</li>
+        <li><b>Mass:</b> 9.11 × 10<sup>-31</sup> kg</li>
+        <li><b>Spin:</b> 1/2 (intrinsic angular momentum, m<sub>s</sub> = +1/2 or -1/2)</li>
+        <li><b>Wavefunction:</b> Describes probability of location</li>
+        <li><b>Heisenberg Uncertainty:</b> Position and momentum cannot both be known exactly <span style="color:#48cae4;cursor:pointer;" onclick="showUncertaintyInfo()">[?]</span></li>
+        <li><b>Pauli Exclusion:</b> No two electrons in an atom can have the same quantum state</li>
+      </ul>
+      <h2>Explore Electron Orbitals</h2>
+      <p>Click below to view other orbital shapes (2p, 3d, etc).</p>
+      <div id="orbital-buttons"></div>
+      <button id="back" onclick="window.location.href='atoms.html'">Back to Atom</button>
+      <div id="experiment-info" style="display:none;position:absolute;top:12px;left:12px;background:rgba(20,30,50,0.97);color:#fff200;padding:16px 22px;border-radius:16px;box-shadow:0 0 18px #48cae4a0;z-index:30;font-size:16px;max-width:420px;">
+        <b>Experimental Limits:</b><br>
+        STM, AFM, and X-ray crystallography do <u>not</u> directly image quantum orbitals. They measure averaged electron densities, not individual electron clouds. The visualization here is a theoretical model, not a direct observation.
+        <br><span style="color:#48cae4;cursor:pointer;float:right;" onclick="document.getElementById('experiment-info').style.display='none'">[close]</span>
+      </div>
+      <div id="uncertainty-info" style="display:none;position:absolute;top:60px;left:12px;background:rgba(20,30,50,0.97);color:#48cae4;padding:16px 22px;border-radius:16px;box-shadow:0 0 18px #48cae4a0;z-index:30;font-size:16px;max-width:420px;">
+        <b>Heisenberg Uncertainty Principle:</b><br>
+        The more precisely the electron's position is known, the less precisely its momentum can be known, and vice versa. This is a fundamental quantum limit, not a measurement error.
+        <br><span style="color:#fff200;cursor:pointer;float:right;" onclick="document.getElementById('uncertainty-info').style.display='none'">[close]</span>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <!-- Quantum Menu injection -->
+  <script>
+    function createExpensiveMenu() {
+      // --- Buy Me a Coffee Popup Injection ---
+      if (!document.getElementById('donate-popup')) {
+        const donatePopup = document.createElement('div');
+        donatePopup.id = 'donate-popup';
+        donatePopup.style.position = 'fixed';
+        donatePopup.style.bottom = '38px';
+        donatePopup.style.right = '38px';
+        donatePopup.style.zIndex = '9999';
+        donatePopup.style.background = 'linear-gradient(135deg,#48cae4 60%,#ffde59 100%)';
+        donatePopup.style.border = '4px solid #fff200';
+        donatePopup.style.borderRadius = '32px';
+        donatePopup.style.boxShadow = '0 0 48px #48cae4a0, 0 0 0 8px #fff200a0 inset, 0 0 32px #ffde59a0';
+        donatePopup.style.padding = '32px 38px 32px 38px';
+        donatePopup.style.display = 'flex';
+        donatePopup.style.flexDirection = 'column';
+        donatePopup.style.alignItems = 'center';
+        donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';
+        donatePopup.style.cursor = 'pointer';
+        donatePopup.innerHTML = `
+          <div style="font-size:32px;font-weight:900;color:#fff200;text-shadow:0 0 18px #48cae4a0,0 0 8px #fff200;letter-spacing:1px;margin-bottom:10px;animation:donatePulse 1.2s infinite alternate;">☕ Support This Project!</div>
+          <div style="font-size:20px;color:#1a2233;font-weight:600;margin-bottom:18px;text-align:center;max-width:320px;">If you love this interactive science tool, please consider <span style='color:#48cae4;font-weight:700;'>buying me a coffee</span> to help keep it free and growing!<br><span style='font-size:16px;color:#ff3c7e;font-weight:700;'>Your support means the world! 💖</span></div>
+          <button id="donate-btn" style="font-size:22px;font-weight:800;padding:16px 38px;background:linear-gradient(90deg,#ffde59 60%,#48cae4 100%);color:#1a2233;border:none;border-radius:18px;box-shadow:0 0 18px #48cae4a0,0 0 8px #fff200;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;animation:donateBtnBounce 1.5s infinite alternate;">☕ Buy Me a Coffee</button>
+          <span id="donate-close" style="position:absolute;top:10px;right:18px;font-size:28px;color:#1a2233;cursor:pointer;font-weight:900;opacity:0.7;">×</span>
+        `;
+        donatePopup.onmouseenter = () => donatePopup.style.transform = 'scale(1.04) rotate(-1deg)';
+        donatePopup.onmouseleave = () => donatePopup.style.transform = '';
+        document.body.appendChild(donatePopup);
+        // Animate in
+        setTimeout(()=>{donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';}, 100);
+        // Button click
+        donatePopup.querySelector('#donate-btn').onclick = (e) => {
+          e.stopPropagation();
+          window.open('https://buymeacoffee.com/rorrimaesu','_blank');
+          donatePopup.style.animation = 'donatePopOut 0.7s';
+          setTimeout(()=>donatePopup.style.display='none',650);
+        };
+        // Close button
+        donatePopup.querySelector('#donate-close').onclick = (e) => {
+          e.stopPropagation();
+          donatePopup.style.animation = 'donatePopOut 0.7s';
+          setTimeout(()=>donatePopup.style.display='none',650);
+        };
+        // Reappear after 90s if not clicked
+        setTimeout(()=>{
+          if (donatePopup.style.display!=='none') return;
+          donatePopup.style.display='flex';
+          donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';
+        },90000);
+        // Add keyframes
+        const style = document.createElement('style');
+        style.innerHTML = `
+          @keyframes donatePopIn {
+            0% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
+            60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          }
+          @keyframes donatePopOut {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0.2) rotate(30deg); opacity: 0; }
+          }
+          @keyframes donatePulse {
+            0% { text-shadow: 0 0 18px #48cae4a0,0 0 8px #fff200; }
+            100% { text-shadow: 0 0 38px #ffde59,0 0 18px #48cae4; }
+          }
+          @keyframes donateBtnBounce {
+            0% { transform: scale(1) translateY(0); }
+            100% { transform: scale(1.08) translateY(-8px); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      // ...existing code...
+      if (document.getElementById('expensive-menu')) return;
+      // Menu button (quantum icon)
+      const menuBtn = document.createElement('div');
+      menuBtn.id = 'expensive-menu-btn';
+      menuBtn.innerHTML = `<svg width="44" height="44" viewBox="0 0 44 44" style="filter:drop-shadow(0 0 12px #48cae4);"><circle cx="22" cy="22" r="18" fill="url(#g)" stroke="#48cae4" stroke-width="2"/><g><ellipse cx="22" cy="22" rx="12" ry="5" fill="none" stroke="#48cae4" stroke-width="2"/><ellipse cx="22" cy="22" rx="5" ry="12" fill="none" stroke="#48cae4" stroke-width="2" transform="rotate(60 22 22)"/><ellipse cx="22" cy="22" rx="5" ry="12" fill="none" stroke="#48cae4" stroke-width="2" transform="rotate(-60 22 22)"/></g><defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#48cae4"/><stop offset="100%" stop-color="#1a2233"/></radialGradient></defs></svg>`;
+      menuBtn.style.position = 'fixed';
+      menuBtn.style.top = '32px';
+      menuBtn.style.right = '38px';
+      menuBtn.style.zIndex = '300';
+      menuBtn.style.cursor = 'pointer';
+      menuBtn.style.transition = 'transform 0.3s cubic-bezier(.68,-0.55,.27,1.55)';
+      menuBtn.onmouseenter = () => menuBtn.style.transform = 'scale(1.15)';
+      menuBtn.onmouseleave = () => menuBtn.style.transform = '';
+      document.body.appendChild(menuBtn);
+
+      // Menu panel
+      const menuPanel = document.createElement('div');
+      menuPanel.id = 'expensive-menu';
+      menuPanel.style.position = 'fixed';
+      menuPanel.style.top = '24px';
+      menuPanel.style.right = '32px';
+      menuPanel.style.width = '340px';
+      menuPanel.style.maxWidth = '90vw';
+      menuPanel.style.background = 'rgba(20,30,50,0.92)';
+      menuPanel.style.border = '2px solid #48cae4';
+      menuPanel.style.borderRadius = '24px';
+      menuPanel.style.boxShadow = '0 0 48px #48cae4a0, 0 0 0 8px #1a2233a0 inset';
+      menuPanel.style.backdropFilter = 'blur(18px)';
+      menuPanel.style.padding = '38px 32px 32px 32px';
+      menuPanel.style.zIndex = '350';
+      menuPanel.style.display = 'none';
+      menuPanel.style.flexDirection = 'column';
+      menuPanel.style.gap = '22px';
+      menuPanel.style.animation = '';
+      menuPanel.innerHTML = `
+          <div style="font-size:28px;font-weight:700;color:#48cae4;text-shadow:0 0 18px #48cae4a0;letter-spacing:1px;margin-bottom:18px;">Quantum Menu</div>
+          <div class="menu-item" data-link="atom">🔬 Atom Explorer</div>
+          <div class="menu-item" data-link="electron">⚡ Electron Explorer</div>
+          <div class="menu-item" data-link="lab">🧪 Chemistry Lab</div>
+          <div class="menu-item" data-link="tour">🧭 Guided Tour</div>
+          <div class="menu-item" data-link="settings">⚙️ Settings</div>
+          <div class="menu-item" data-link="about">📚 About</div>
+      `;
+      document.body.appendChild(menuPanel);
+
+      // Particle background animation (canvas)
+      const particleCanvas = document.createElement('canvas');
+      particleCanvas.width = 340;
+      particleCanvas.height = 420;
+      particleCanvas.style.position = 'absolute';
+      particleCanvas.style.top = '0';
+      particleCanvas.style.left = '0';
+      particleCanvas.style.width = '100%';
+      particleCanvas.style.height = '100%';
+      particleCanvas.style.pointerEvents = 'none';
+      particleCanvas.style.zIndex = '0';
+      menuPanel.appendChild(particleCanvas);
+      // Animate particles
+      let particles = Array.from({length: 38}, () => ({x: Math.random()*340, y: Math.random()*420, r: Math.random()*2+1, dx: (Math.random()-0.5)*0.7, dy: (Math.random()-0.5)*0.7, hue: Math.random()*360}));
+      function drawParticles() {
+          const ctx = particleCanvas.getContext('2d');
+          ctx.clearRect(0,0,340,420);
+          for (const p of particles) {
+              ctx.save();
+              ctx.globalAlpha = 0.18 + Math.abs(Math.sin(Date.now()/700+p.x))*0.12;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+              ctx.fillStyle = `hsl(${p.hue},80%,60%)`;
+              ctx.shadowColor = `hsl(${p.hue},80%,60%)`;
+              ctx.shadowBlur = 12;
+              ctx.fill();
+              ctx.restore();
+              p.x += p.dx; p.y += p.dy;
+              if (p.x<0||p.x>340) p.dx*=-1;
+              if (p.y<0||p.y>420) p.dy*=-1;
+          }
+          requestAnimationFrame(drawParticles);
+      }
+      drawParticles();
+
+      // Menu open/close logic
+      menuBtn.onclick = () => {
+          menuPanel.style.display = menuPanel.style.display==='none'?'flex':'none';
+          menuPanel.style.animation = menuPanel.style.display==='flex'?'menuOpen 0.5s cubic-bezier(.68,-0.55,.27,1.55)':'menuClose 0.4s';
+      };
+
+      // Menu item animation and navigation
+      Array.from(menuPanel.getElementsByClassName('menu-item')).forEach(item => {
+          item.style.fontSize = '20px';
+          item.style.fontWeight = '600';
+          item.style.color = '#e0e0e0';
+          item.style.padding = '12px 18px';
+          item.style.borderRadius = '12px';
+          item.style.marginBottom = '6px';
+          item.style.cursor = 'pointer';
+          item.style.transition = 'background 0.2s, color 0.2s, box-shadow 0.3s, transform 0.2s';
+          item.onmouseenter = () => {
+              item.style.background = 'linear-gradient(90deg,#48cae4 60%,#1a2233 100%)';
+              item.style.color = '#fff';
+              item.style.boxShadow = '0 0 18px #48cae4a0';
+              item.style.transform = 'scale(1.08)';
+          };
+          item.onmouseleave = () => {
+              item.style.background = '';
+              item.style.color = '#e0e0e0';
+              item.style.boxShadow = '';
+              item.style.transform = '';
+          };
+          item.onclick = () => {
+              menuPanel.style.display = 'none';
+              if (item.dataset.link==='home') window.location.href='index.html';
+              if (item.dataset.link==='atom') window.location.href='index.html';
+              if (item.dataset.link==='electron') window.location.href='electron.html';
+              if (item.dataset.link==='lab') window.location.href='lab.html';
+              if (item.dataset.link==='tour') alert('Guided Tour coming soon!');
+              if (item.dataset.link==='settings') alert('Settings coming soon!');
+              if (item.dataset.link==='about') alert('Interactive Atom Visualizer\nCreated by Science Nerds.\nPowered by Quantum Canvas.');
+          };
+      });
+
+      // Responsive: shrink for mobile
+      function updateMenuLayout() {
+          if (window.innerWidth < 600) {
+              menuPanel.style.width = '98vw';
+              menuPanel.style.padding = '24px 8vw 24px 8vw';
+              menuBtn.style.right = '12px';
+              menuBtn.style.top = '12px';
+          } else {
+              menuPanel.style.width = '340px';
+              menuPanel.style.padding = '38px 32px 32px 32px';
+              menuBtn.style.right = '38px';
+              menuBtn.style.top = '32px';
+          }
+      }
+      window.addEventListener('resize', updateMenuLayout);
+      updateMenuLayout();
+    }
+    window.addEventListener('DOMContentLoaded', createExpensiveMenu);
+  </script>
+  <script>
+    // --- Camera Controls & View Buttons ---
+    let controls, camera, renderer, scene;
+    function addCameraControls(container) {
+      if (window.THREE && THREE.OrbitControls) {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.minDistance = 2.5;
+        controls.maxDistance = 12;
+      }
+    }
+    function addViewButtons() {
+      let viewBar = document.getElementById('view-bar');
+      if (!viewBar) {
+        viewBar = document.createElement('div');
+        viewBar.id = 'view-bar';
+        viewBar.style.position = 'absolute';
+        viewBar.style.top = '24px';
+        viewBar.style.left = '50%';
+        viewBar.style.transform = 'translateX(-50%)';
+        viewBar.style.zIndex = '10';
+        viewBar.style.display = 'flex';
+        viewBar.style.gap = '18px';
+        viewBar.style.background = 'rgba(20,30,50,0.7)';
+        viewBar.style.borderRadius = '12px';
+        viewBar.style.boxShadow = '0 0 18px #48cae4a0';
+        viewBar.style.padding = '8px 18px';
+        viewBar.style.fontWeight = '600';
+        viewBar.style.color = '#48cae4';
+        viewBar.innerHTML = '';
+        ['X','Y','Z'].forEach(axis => {
+          const btn = document.createElement('button');
+          btn.textContent = `View ${axis}`;
+          btn.className = 'orbital-btn';
+          btn.onclick = () => {
+            if (axis==='X') camera.position.set(6,0,0);
+            if (axis==='Y') camera.position.set(0,6,0);
+            if (axis==='Z') camera.position.set(0,0,6);
+            camera.lookAt(0,0,0);
+          };
+          viewBar.appendChild(btn);
+        });
+        document.getElementById('main').appendChild(viewBar);
+      }
+    }
+    // --- Particle Background Animation ---
+    const particleCanvas = document.getElementById('particle-bg');
+    function resizeParticleCanvas() {
+      particleCanvas.width = window.innerWidth;
+      particleCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeParticleCanvas);
+    resizeParticleCanvas();
+    let particles = Array.from({length: 48}, () => ({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, r: Math.random()*2+1, dx: (Math.random()-0.5)*0.7, dy: (Math.random()-0.5)*0.7, hue: Math.random()*360}));
+    function drawParticles() {
+      const ctx = particleCanvas.getContext('2d');
+      ctx.clearRect(0,0,particleCanvas.width,particleCanvas.height);
+      for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = 0.18 + Math.abs(Math.sin(Date.now()/700+p.x))*0.12;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = `hsl(${p.hue},80%,60%)`;
+        ctx.shadowColor = `hsl(${p.hue},80%,60%)`;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+        p.x += p.dx; p.y += p.dy;
+        if (p.x<0||p.x>particleCanvas.width) p.dx*=-1;
+        if (p.y<0||p.y>particleCanvas.height) p.dy*=-1;
+      }
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    // --- Quantum Number Controls ---
+    const nSelect = document.getElementById('n-select');
+    const lSelect = document.getElementById('l-select');
+    const mlSelect = document.getElementById('ml-select');
+    const msSelect = document.getElementById('ms-select');
+    function updateQuantumControls(n=1,l=0,ml=0,ms=1) {
+      nSelect.innerHTML = '';
+      for(let i=1;i<=4;i++){
+        const opt=document.createElement('option');opt.value=i;opt.text=`n=${i}`;if(i==n)opt.selected=true;nSelect.appendChild(opt);
+      }
+      lSelect.innerHTML = '';
+      for(let i=0;i<n;i++){
+        const opt=document.createElement('option');opt.value=i;opt.text=`l=${i}`;if(i==l)opt.selected=true;lSelect.appendChild(opt);
+      }
+      mlSelect.innerHTML = '';
+      for(let i=-l;i<=l;i++){
+        const opt=document.createElement('option');opt.value=i;opt.text=`m_l=${i}`;if(i==ml)opt.selected=true;mlSelect.appendChild(opt);
+      }
+      msSelect.innerHTML = '';
+      [{v:1,t:'mₛ=+1/2'},{v:-1,t:'mₛ=−1/2'}].forEach(o=>{
+        const opt=document.createElement('option');opt.value=o.v;opt.text=o.t;if(o.v==ms)opt.selected=true;msSelect.appendChild(opt);
+      });
+    }
+    nSelect.onchange = ()=>updateQuantumControls(Number(nSelect.value),0,0,1);
+    lSelect.onchange = ()=>updateQuantumControls(Number(nSelect.value),Number(lSelect.value),0,1);
+    mlSelect.onchange = ()=>updateQuantumControls(Number(nSelect.value),Number(lSelect.value),Number(mlSelect.value),1);
+    msSelect.onchange = ()=>renderElectronOrbitalModel('model');
+    updateQuantumControls();
+
+    // --- Orbital Model Rendering ---
+    let phaseEnabled = false, cutawayEnabled = false, spinEnabled = false;
+    document.getElementById('phase-toggle').onclick = function(){ phaseEnabled=!phaseEnabled; this.classList.toggle('active',phaseEnabled); renderElectronOrbitalModel('model'); };
+    document.getElementById('cutaway-toggle').onclick = function(){ cutawayEnabled=!cutawayEnabled; this.classList.toggle('active',cutawayEnabled); renderElectronOrbitalModel('model'); };
+    document.getElementById('spin-toggle').onclick = function(){ spinEnabled=!spinEnabled; this.classList.toggle('active',spinEnabled); renderElectronOrbitalModel('model'); };
+
+    function renderElectronOrbitalModel(containerId) {
+      const container = document.getElementById(containerId);
+      while (container.firstChild) container.removeChild(container.firstChild);
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(container.offsetWidth, container.offsetHeight);
+      container.appendChild(renderer.domElement);
+      scene = new THREE.Scene();
+      scene.background = null;
+      camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+      camera.position.set(0, 0, 6);
+      addCameraControls(container);
+      addViewButtons();
+      let n = Number(nSelect.value), l = Number(lSelect.value), ml = Number(mlSelect.value), ms = Number(msSelect.value);
+      let points = [];
+      // --- Orbital Generation ---
+      let pointCount = 9000;
+      let radialNodes = (n-l-1);
+      for (let i = 0; i < pointCount; i++) {
+        // Spherical coordinates
+        const phi = Math.random() * 2 * Math.PI;
+        const costheta = Math.random() * 2 - 1;
+        const theta = Math.acos(costheta);
+        // Radial probability (approximate)
+        let rRaw = Math.pow(Math.random(), 0.5) * (1.5 + n*0.7);
+        let r = rRaw;
+        // Angular part (l, ml)
+        let amp = 1;
+        if (l === 1) amp = Math.cos(theta);
+        if (l === 2) amp = Math.sin(theta)*Math.cos(theta);
+        if (l === 3) amp = Math.sin(theta)*Math.sin(theta)*Math.cos(2*phi);
+        // Magnetic quantum number (ml)
+        if (ml !== 0) amp *= Math.cos(ml*phi);
+        // Cutaway mode
+        if (cutawayEnabled && r < (1.5 + n*0.7)*0.5) continue;
+        // Nodal surface highlighting
+        let highlightNode = false;
+        // Angular nodes
+        if (l === 1 && Math.abs(amp) < 0.05) highlightNode = true;
+        if (l === 2 && Math.abs(amp) < 0.05) highlightNode = true;
+        // Radial nodes for s-orbitals (l=0)
+        let highlightRadialNode = false;
+        if (l === 0 && radialNodes > 0) {
+          let nodeSpacing = (1.5 + n*0.7) / (radialNodes+1);
+          for (let rn=1; rn<=radialNodes; rn++) {
+            if (Math.abs(r - rn*nodeSpacing) < nodeSpacing*0.12) highlightRadialNode = true;
+          }
+        }
+        // Phase coloring
+        let color = phaseEnabled ? (amp>=0?'#48cae4':'#ff3c7e') : '#48cae4';
+        if (highlightNode || highlightRadialNode) color = '#fff200';
+        let opacity = 0.5 + 0.5*Math.abs(amp);
+        points.push({
+          x: r * Math.sin(theta) * Math.cos(phi),
+          y: r * Math.sin(theta) * Math.sin(phi),
+          z: r * Math.cos(theta),
+          color,
+          opacity
+        });
+      }
+      // --- Render Points ---
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(points.length*3);
+      const colors = new Float32Array(points.length*3);
+      for(let i=0;i<points.length;i++){
+        positions[i*3]=points[i].x;positions[i*3+1]=points[i].y;positions[i*3+2]=points[i].z;
+        let c = points[i].color==='#48cae4'?[0.28,0.79,0.89]:points[i].color==='#ff3c7e'?[1,0.24,0.49]:[1,0.95,0.13];
+        colors[i*3]=c[0];colors[i*3+1]=c[1];colors[i*3+2]=c[2];
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors,3));
+      // Custom shader for glowing points
+      const material = new THREE.PointsMaterial({ size: 0.09, vertexColors: true, transparent: true, opacity: 0.7 });
+      const cloud = new THREE.Points(geometry, material);
+      scene.add(cloud);
+      // --- Spin Representation & Pauli Exclusion Principle ---
+      if (spinEnabled) {
+        // Show only one arrow for selected mₛ
+        let arrowColor = ms === 1 ? 0x48cae4 : 0xff3c7e;
+        let arrowDir = ms === 1 ? new THREE.Vector3(0,1,0) : new THREE.Vector3(0,-1,0);
+        let arrow = new THREE.ArrowHelper(arrowDir, new THREE.Vector3(0,0,0), 1.2, arrowColor, 0.3, 0.18);
+        arrow.position.set(0,0,0);
+        scene.add(arrow);
+        // Info overlay
+        let info = document.getElementById('spin-info');
+        if (!info) {
+          info = document.createElement('div');
+          info.id = 'spin-info';
+          info.style.position = 'absolute';
+          info.style.top = '16px';
+          info.style.right = '32px';
+          info.style.background = 'rgba(20,30,50,0.92)';
+          info.style.color = '#48cae4';
+          info.style.padding = '12px 18px';
+          info.style.borderRadius = '12px';
+          info.style.boxShadow = '0 0 18px #48cae4a0';
+          info.style.zIndex = '20';
+          info.style.fontWeight = '600';
+          info.innerHTML = 'Spin quantum number mₛ: '+(ms===1?'+1/2':'−1/2')+'<br>Pauli Exclusion Principle: Each orbital can hold two electrons with opposite spins.';
+          document.body.appendChild(info);
+        } else {
+          info.innerHTML = 'Spin quantum number mₛ: '+(ms===1?'+1/2':'−1/2')+'<br>Pauli Exclusion Principle: Each orbital can hold two electrons with opposite spins.';
+        }
+      } else {
+        let info = document.getElementById('spin-info');
+        if (info) info.remove();
+      }
+      // --- Lighting ---
+      scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+      const pointLight = new THREE.PointLight(0x48cae4, 1.2, 10);
+      pointLight.position.set(2, 2, 3);
+      scene.add(pointLight);
+      // --- Animation & Morphing ---
+      let lastN = n, lastL = l, lastMl = ml;
+      function animateOrbitalModel() {
+        cloud.rotation.y += 0.008;
+        cloud.material.opacity = 0.7 + 0.2*Math.sin(Date.now()/600);
+        if (controls) controls.update();
+        renderer.render(scene, camera);
+        requestAnimationFrame(animateOrbitalModel);
+      }
+      animateOrbitalModel();
+    }
+
+    // --- Orbital Buttons ---
+    function setupOrbitalButtons() {
+      const btns = [
+        { type: '1s', label: '1s (Sphere)', n:1, l:0, ml:0 },
+        { type: '2p', label: '2p (Dumbbell)', n:2, l:1, ml:0 },
+        { type: '3d', label: '3d (Clover)', n:3, l:2, ml:0 }
+      ];
+      const container = document.getElementById('orbital-buttons');
+      container.innerHTML = '';
+      btns.forEach(b => {
+        const btn = document.createElement('button');
+        btn.textContent = b.label;
+        btn.className = 'orbital-btn';
+        btn.onclick = () => {
+          updateQuantumControls(b.n,b.l,b.ml);
+          renderElectronOrbitalModel('model');
+        };
+        container.appendChild(btn);
+      });
+    }
+    setupOrbitalButtons();
+    renderElectronOrbitalModel('model');
+    // --- Experimental Info Overlay ---
+    document.getElementById('teach').addEventListener('dblclick',()=>{
+      document.getElementById('experiment-info').style.display='block';
+    });
+    // --- Uncertainty Principle Overlay ---
+    window.showUncertaintyInfo = function() {
+      document.getElementById('uncertainty-info').style.display='block';
+    }
+  </script>
+</body>
+</html>

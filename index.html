@@ -2,760 +2,1060 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Interactive Cosmic Sandbox</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Periodic Table and Atom Visualizer</title>
     <style>
+        :root {
+            --alkali-metal: rgba(255, 100, 100, 0.4);
+            --alkaline-earth-metal: rgba(255, 180, 100, 0.4);
+            --lanthanide: rgba(255, 200, 150, 0.4);
+            --actinide: rgba(255, 150, 200, 0.4);
+            --transition-metal: rgba(255, 220, 100, 0.4);
+            --post-transition-metal: rgba(150, 220, 150, 0.4);
+            --metalloid: rgba(100, 200, 200, 0.4);
+            --nonmetal: rgba(100, 255, 100, 0.4);
+            --halogen: rgba(200, 220, 100, 0.4);
+            --noble-gas: rgba(200, 150, 255, 0.4);
+            --unknown: rgba(200, 200, 200, 0.4);
+            --bg-dark: #050510;
+            --text-light: #e0e0e0;
+            --accent-blue: #48cae4;
+        }
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #000000;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
             font-family: 'Inter', sans-serif;
-            overscroll-behavior: none;
         }
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
-        .controls-panel {
+        #welcome-overlay {
             position: absolute;
-            background: linear-gradient(145deg, rgba(23, 30, 46, 0.85), rgba(10, 15, 25, 0.85));
-            padding: 1rem;
-            border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
-            max-height: calc(100vh - 2rem);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            transition: opacity 0.5s;
+        }
+        #welcome-box {
+            background-color: rgba(30,30,50,0.8);
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin: 20px;
+        }
+        #welcome-box h1 { margin-top: 0; color: var(--accent-blue); }
+        .button {
+            padding: 12px 25px;
+            background-color: var(--accent-blue);
+            border: none;
+            color: var(--bg-dark);
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .button:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--accent-blue); }
+        
+        #periodic-table-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            place-items: center;
+            overflow: auto;
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            z-index: 10;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #table-wrapper {
             display: flex;
             flex-direction: column;
-        }
-        #main-controls-container {
-            top: 1rem;
-            left: 1rem;
-            width: 320px;
-            max-width: calc(100vw - 2rem);
-            z-index: 10;
-        }
-        #mass-editor-panel {
-            top: 1rem;
-            right: 1rem;
-            width: 320px;
-            max-width: calc(100vw - 2rem);
-            z-index: 10;
-        }
-        #mass-editor-content {
-            overflow-y: auto;
-            padding-right: 0.5rem; /* For scrollbar spacing */
-        }
-        #collapsible-controls {
-            max-height: 500px; /* Set a large max-height for open state and desktop */
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out, margin-top 0.5s ease-in-out;
-        }
-        #mobile-controls {
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            right: 1rem;
-            display: none;
-            justify-content: space-between;
-            align-items: flex-end;
-            pointer-events: none;
-            z-index: 5;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-        #mobile-controls.visible {
-            opacity: 1;
-        }
-        .joystick-container {
-            width: 120px;
-            height: 120px;
-            position: relative;
-            background-color: rgba(30, 41, 59, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            pointer-events: auto;
-        }
-        .joystick-handle {
-            width: 60px;
-            height: 60px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            background-color: rgba(71, 85, 105, 0.7);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-        }
-        #mobile-fire-button {
-            width: 80px;
-            height: 80px;
-            background-color: #ef4444;
-            border-radius: 50%;
-            display: flex;
             align-items: center;
+            gap: 20px;
+            width: max-content;
+        }
+        #periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 60px);
+            grid-template-rows: repeat(10, 60px);
+            gap: 4px;
+        }
+        .element {
+            border: 1px solid rgba(128, 200, 255, 0.5);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.25rem;
-            border: 3px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.7);
-            pointer-events: auto;
-            transition: transform 0.1s;
+            align-items: center;
+            transition: background-color 0.3s, transform 0.3s, opacity 0.3s;
+            font-size: 12px;
+            text-align: center;
+            will-change: transform;
+            position: relative;
         }
-        #mobile-fire-button:active {
-            transform: scale(0.9);
+        .element:hover {
+            border-color: rgba(200, 255, 255, 0.8);
+            transform: scale(1.1);
+            z-index: 100;
         }
-        #crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 30px;
-            height: 30px;
-            border: 2px solid rgba(0, 255, 136, 0.7);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            z-index: 4;
-        }
-        @media (max-width: 767px) {
-            #mass-editor-panel {
-                display: none; /* Hide mass editor on small screens for clarity */
+        .element .symbol { font-size: 18px; font-weight: bold; }
+        .element .name { font-size: 8px; display: none; }
+        .element:hover .name { display: block; }
+        .element .number { position: absolute; top: 3px; left: 3px; font-size: 10px; opacity: 0.7; }
+        
+        #legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px 15px; max-width: 100%; }
+        .legend-item { display: flex; align-items: center; cursor: pointer; padding: 5px; border-radius: 4px; transition: background-color 0.2s;}
+        .legend-item:hover { background-color: rgba(255,255,255,0.1); }
+        .legend-color { width: 15px; height: 15px; border-radius: 3px; margin-right: 8px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+        .legend-text { font-size: 12px; }
+
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0; visibility: hidden; transition: opacity 1s ease-in, visibility 0s 1s; }
+        .ui-button { position: absolute; z-index: 100; padding: 10px 15px; background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; border-radius: 5px; cursor: pointer; display: none; opacity: 0; transition: opacity 0.5s, background-color 0.2s; backdrop-filter: blur(5px); }
+        .ui-button:hover { background-color: rgba(255, 255, 255, 0.2); }
+        #back-button { top: 20px; left: 20px; }
+        #tour-button { top: 20px; left: 150px; }
+        
+        .info-panel { position: absolute; z-index: 100; padding: 15px; background-color: rgba(0, 0, 0, 0.4); border-radius: 5px; display: none; opacity: 0; transition: opacity 0.5s; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); }
+        #atom-info { bottom: 20px; right: 20px; text-align: right; }
+        #particle-info { top: 70px; left: 20px; max-width: 220px; }
+        #particle-info h3 { margin-top: 0; color: var(--accent-blue); }
+
+        .tour-tip { position: absolute; background-color: rgba(0, 128, 255, 0.9); color: white; padding: 15px; border-radius: 8px; z-index: 200; opacity: 0; transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; max-width: 250px; font-size: 14px; line-height: 1.4; pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transform: scale(0.8); }
+
+        @media (max-width: 1200px) {
+            #periodic-table {
+                grid-template-columns: repeat(18, 50px);
+                grid-template-rows: repeat(10, 50px);
             }
-            #collapsible-controls.collapsed {
-                max-height: 0;
-                margin-top: 0 !important;
+        }
+
+        @media (max-width: 992px) {
+            #periodic-table {
+                grid-template-columns: repeat(9, 50px);
+                grid-template-rows: repeat(20, 50px);
             }
+             .element[data-category="lanthanide"], .element[data-category="actinide"] {
+                 display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .ui-button { padding: 8px 12px; font-size: 12px; }
+            #back-button { top: 10px; left: 10px; }
+            #tour-button { top: 10px; right: 10px; left: auto; }
+            .info-panel { padding: 10px; font-size: 12px; box-sizing: border-box; }
+            #atom-info { bottom: 10px; left: 10px; right: 10px; text-align: center; max-width: calc(100% - 20px); }
+            #particle-info { top: 55px; left: 10px; right: 10px; max-width: calc(100% - 20px); width: auto; }
+            #welcome-box { max-width: 90vw; padding: 25px; }
+            .tour-tip { max-width: 80vw; }
+        }
+         @media (max-width: 500px) {
+            #periodic-table {
+                grid-template-columns: repeat(9, 40px);
+                grid-template-rows: repeat(20, 40px);
+            }
+             .element .symbol { font-size: 14px; }
+             .element .number { font-size: 8px; }
         }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-black">
-
-    <!-- Left Controls Panel -->
-    <div id="main-controls-container" class="controls-panel">
-        <div class="flex justify-between items-center">
-            <h1 class="text-xl font-bold">Cosmic Sandbox</h1>
-            <button id="toggle-controls-btn" class="md:hidden p-2 bg-gray-700 rounded-lg text-white font-semibold">Hide</button>
-        </div>
-        <div id="collapsible-controls" class="mt-4">
-            <div class="mb-3"><label for="gravity-slider" class="text-sm font-medium">Global Gravity</label><div class="flex items-center gap-2 mt-1"><input type="range" id="gravity-slider" min="0.1" max="1000" step="0.1" value="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"><input type="number" id="gravity-input" min="0.1" step="0.1" value="1" class="w-20 bg-gray-800 border border-gray-600 text-white rounded-md p-1 text-center"></div></div>
-            
-            <!-- Projectile Selection -->
-            <div class="mb-3">
-                <label class="text-sm font-medium">Projectile Type</label>
-                <!-- Mobile Selector -->
-                <div class="md:hidden flex items-center justify-between mt-1">
-                    <button id="prev-ammo-btn" class="px-4 py-2 bg-gray-700 rounded-lg text-lg font-bold">&lt;</button>
-                    <span id="current-ammo-name" class="font-semibold text-center text-lg mx-2">Small Planet</span>
-                    <button id="next-ammo-btn" class="px-4 py-2 bg-gray-700 rounded-lg text-lg font-bold">&gt;</button>
-                </div>
-                <!-- Desktop Selector -->
-                <select id="ammo-select" class="w-full mt-1 p-2 bg-gray-800 border border-gray-600 rounded-md hidden md:block">
-                    <option value="small-planet">Small Planet</option>
-                    <option value="large-planet">Large Planet</option>
-                    <option value="star">Star</option>
-                    <option value="dwarf-star">Dwarf Star</option>
-                    <option value="black-hole">Black Hole</option>
-                </select>
-            </div>
-
-            <div class="mb-4"><label for="power-slider" class="text-sm font-medium">Launch Power</label><div class="flex items-center gap-2 mt-1"><input type="range" id="power-slider" min="10" max="1000" step="1" value="50" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"><input type="number" id="power-input" min="10" step="1" value="50" class="w-20 bg-gray-800 border border-gray-600 text-white rounded-md p-1 text-center"></div></div>
-            <p id="object-count-info" class="text-xs text-gray-400 mt-3">Objects: 0</p>
-            <p id="controls-info" class="text-xs text-gray-400 mt-1">Click simulation to aim.</p>
-        </div>
-        <div class="flex flex-col md:flex-row gap-2 mt-4 pt-4 border-t border-gray-700">
-            <button id="toggle-aim-mode-btn" class="md:hidden w-full p-2 bg-blue-600 rounded-lg text-white font-semibold">Aim</button>
-            <button id="main-fire-btn" class="w-full p-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-colors">FIRE</button>
-            <button id="clear-btn" class="w-full p-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors">Clear Scene</button>
+<body>
+    <div id="welcome-overlay">
+        <div id="welcome-box">
+            <h1>Atomic Visualizer</h1>
+            <p>Explore the building blocks of the universe. Select an element from the periodic table to see its atomic structure in 3D, or take a guided tour to learn about its components.</p>
+            <button id="start-app-button" class="button">Begin Exploration</button>
         </div>
     </div>
 
-    <!-- Right Mass Editor Panel -->
-    <div id="mass-editor-panel" class="controls-panel">
-        <h2 class="text-lg font-bold mb-2 flex-shrink-0">Object Mass Editor</h2>
-        <div id="mass-editor-content" class="flex-grow"></div>
+    <div id="periodic-table-container">
+        <div id="table-wrapper">
+            <div id="periodic-table"></div>
+            <div id="legend"></div>
+        </div>
     </div>
 
-    <!-- Mobile-only On-Screen Controls -->
-    <div id="mobile-controls"><div id="joystick-move" class="joystick-container"><div class="joystick-handle"></div></div><div id="mobile-fire-button">FIRE</div><div id="joystick-aim" class="joystick-container"><div class="joystick-handle"></div></div></div>
-    <div id="crosshair"></div>
+    <div id="canvas-container">
+        <button id="back-button" class="ui-button">Back to Table</button>
+        <button id="tour-button" class="ui-button">Start Guided Tour</button>
+        <div id="atom-info" class="info-panel"></div>
+        <div id="particle-info" class="info-panel"></div>
+    </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
-            }
-        }
-    </script>
-    <script type="module">
-        import * as THREE from 'three';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-        const state = {isMobile: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent), cameraMode: 'cinematic', keyState: {}, gravityConstant: 1.0, lastGravityConstant: 1.0, cannonPower: 50, canFire: true, recoilOffset: 0, objectIdCounter: 0};
-        const objectTypes = {
-            'small-planet': { name: 'Small Planet', radius: 1.5, color: 0x4a90e2, mass: 5, emissiveIntensity: 0.4 },
-            'large-planet': { name: 'Large Planet', radius: 3, color: 0x7ed321, mass: 20, emissiveIntensity: 0.4 },
-            'star': { name: 'Star', radius: 7, color: 0xffd700, mass: 200, isStar: true, emissiveIntensity: 1.2 },
-            'dwarf-star': { name: 'Dwarf Star', radius: 4, color: 0xffffff, mass: 100, isStar: true, emissiveIntensity: 1.0 },
-            'black-hole': { name: 'Black Hole', radius: 5, color: 0x000000, mass: 50000, isBlackHole: true, emissiveIntensity: 0 }
-        };
-        let blackHoles = [], celestialObjects = [], whiteHoles = [], transitionQueue = [];
-        
-        const scene = new THREE.Scene();
-        const clock = new THREE.Clock();
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.appendChild(renderer.domElement);
-
-        const cinematicCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-        cinematicCamera.position.set(0, 150, 600);
-        const cannonCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
-        let activeCamera = cinematicCamera;
-
-        scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-        const pointLight = new THREE.PointLight(0xffffff, 2.5, 5000);
-        scene.add(pointLight);
-
-        // --- Selective Bloom Setup ---
-        const ENTIRE_SCENE = 0, BLOOM_SCENE = 1;
-        const bloomLayer = new THREE.Layers();
-        bloomLayer.set(BLOOM_SCENE);
-
-        const darkMaterial = new THREE.MeshBasicMaterial({ color: "black" });
-        const materials = {};
-
-        const renderPass = new RenderPass(scene, activeCamera);
-
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloomPass.threshold = 0;
-        bloomPass.strength = 0.8; // Adjusted strength for a subtle but colorful glow
-        bloomPass.radius = 0.2;   // Adjusted radius for a softer spread
-
-        const bloomComposer = new EffectComposer(renderer);
-        bloomComposer.renderToScreen = false;
-        bloomComposer.addPass(renderPass);
-        bloomComposer.addPass(bloomPass);
-
-        const finalPass = new ShaderPass(
-            new THREE.ShaderMaterial({
-                uniforms: {
-                    baseTexture: { value: null },
-                    bloomTexture: { value: bloomComposer.renderTarget2.texture }
-                },
-                vertexShader: document.getElementById('vertexshader')?.textContent,
-                fragmentShader: document.getElementById('fragmentshader')?.textContent,
-                defines: {}
-            }), "baseTexture"
-        );
-        finalPass.needsSwap = true;
-
-        const finalComposer = new EffectComposer(renderer);
-        finalComposer.addPass(renderPass);
-        finalComposer.addPass(finalPass);
-        
-        function createDiskGeometry(innerRadius, outerRadius, color1, color2) {
-            const diskParticles = 15000;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(diskParticles * 3);
-            const colors = new Float32Array(diskParticles * 3);
-            const colorInside = new THREE.Color(color1);
-            const colorOutside = new THREE.Color(color2);
-            for (let i = 0; i < diskParticles; i++) {
-                const distance = THREE.MathUtils.randFloat(innerRadius, outerRadius);
-                const angle = THREE.MathUtils.randFloat(0, 2 * Math.PI);
-                positions[i * 3] = Math.cos(angle) * distance;
-                positions[i * 3 + 1] = THREE.MathUtils.randFloat(-2.5, 2.5);
-                positions[i * 3 + 2] = Math.sin(angle) * distance;
-                const lerpFactor = (distance - innerRadius) / (outerRadius - innerRadius);
-                const color = new THREE.Color().lerpColors(colorInside, colorOutside, lerpFactor);
-                colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            return geometry;
-        }
-
-        const smbh = new THREE.Mesh(new THREE.SphereGeometry(25, 64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-        const smbhAccretionDisk = new THREE.Points(createDiskGeometry(35, 120, 0xffa500, 0x8B0000), new THREE.PointsMaterial({ size: 0.8, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false }));
-        smbh.add(smbhAccretionDisk);
-        scene.add(smbh);
-        blackHoles.push({ id: 'smbh', name: 'Supermassive BH', mesh: smbh, mass: 500000, radius: 25, velocity: new THREE.Vector3() });
-
-        const orbitingBh = new THREE.Mesh(new THREE.SphereGeometry(10, 64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-        const orbitingBhAccretionDisk = new THREE.Points(createDiskGeometry(15, 60, 0x00aaff, 0xff6600), new THREE.PointsMaterial({ size: 0.5, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8, depthWrite: false }));
-        orbitingBh.add(orbitingBhAccretionDisk);
-        orbitingBh.position.set(400, 0, 0);
-        scene.add(orbitingBh);
-        const orbitalVelocity = Math.sqrt((state.gravityConstant * 500000) / 400);
-        blackHoles.push({ id: 'orbiting_bh', name: 'Orbiting BH', mesh: orbitingBh, mass: 100000, radius: 10, velocity: new THREE.Vector3(0, 0, -orbitalVelocity) });
-
-        const starfield = new THREE.Points(createStarfieldGeometry(), new THREE.PointsMaterial({ color: 0xffffff, size: 0.7 }));
-        scene.add(starfield);
-
-        function createStarfieldGeometry() {
-            const starGeometry = new THREE.BufferGeometry();
-            const starPositions = [];
-            for (let i = 0; i < 20000; i++) {
-                starPositions.push(THREE.MathUtils.randFloatSpread(4000), THREE.MathUtils.randFloatSpread(4000), THREE.MathUtils.randFloatSpread(4000));
-            }
-            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-            return starGeometry;
-        }
-
-        const cannon = new THREE.Group();
-        const cannonBarrel = new THREE.Mesh(new THREE.CylinderGeometry(3, 2.5, 25, 12), new THREE.MeshStandardMaterial({ color: 0x666677, roughness: 0.5, metalness: 0.9 }));
-        cannonBarrel.rotation.x = Math.PI / 2;
-        const barrelGroup = new THREE.Group();
-        barrelGroup.add(cannonBarrel);
-        barrelGroup.position.y = 5;
-        cannon.add(new THREE.Mesh(new THREE.CylinderGeometry(8, 10, 5, 16), new THREE.MeshStandardMaterial({ color: 0x444455, roughness: 0.6, metalness: 0.8 })), barrelGroup);
-        cannon.position.set(0, -20, 550);
-        scene.add(cannon);
-        barrelGroup.add(cannonCamera);
-        cannonCamera.position.set(0, 3.5, 12);
-
-        const trajectoryLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.7 }));
-        trajectoryLine.frustumCulled = false;
-        scene.add(trajectoryLine);
-
-        function updateTrajectory() {
-            const points = [];
-            const steps = 200, timeStep = 0.5;
-            const startPos = new THREE.Vector3(0, 0, -12.5);
-            barrelGroup.localToWorld(startPos);
-            const fireDirection = new THREE.Vector3();
-            barrelGroup.getWorldDirection(fireDirection);
-            fireDirection.negate();
-            const startVel = fireDirection.clone().multiplyScalar(state.cannonPower);
-            let currentPos = startPos.clone();
-            let currentVel = startVel.clone();
-            const mass = objectTypes[ui.ammoSelect.value].mass;
-            for (let i = 0; i < steps; i++) {
-                let totalForce = new THREE.Vector3();
-                for (const bh of blackHoles) {
-                    const distanceVec = new THREE.Vector3().subVectors(bh.mesh.position, currentPos);
-                    const distanceSq = distanceVec.lengthSq();
-                    if (distanceSq < bh.radius * bh.radius) { totalForce.set(0,0,0); break; }
-                    const forceMagnitude = (state.gravityConstant * bh.mass * mass) / distanceSq;
-                    totalForce.add(distanceVec.normalize().multiplyScalar(forceMagnitude));
+    <script>
+        // --- Floating Labels ---
+        function addFloatingLabel(target, text, offset) {
+            // Create a DOM label
+            const label = document.createElement('div');
+            label.className = 'floating-label';
+            label.textContent = text;
+            label.style.position = 'absolute';
+            label.style.pointerEvents = 'none';
+            label.style.background = 'rgba(30,30,50,0.85)';
+            label.style.color = '#48cae4';
+            label.style.padding = '2px 8px';
+            label.style.borderRadius = '6px';
+            label.style.fontSize = '13px';
+            label.style.fontWeight = 'bold';
+            label.style.zIndex = '120';
+            label.style.opacity = '0.85';
+            canvasContainer.appendChild(label);
+            // Update label position each frame
+            function updateLabel() {
+                let pos;
+                if (target instanceof THREE.Object3D) {
+                    if (target instanceof THREE.Mesh) {
+                        pos = target.getWorldPosition(new THREE.Vector3()).clone().add(offset);
+                    } else {
+                        pos = target.position.clone().add(offset);
+                        target.localToWorld(pos);
+                    }
+                } else {
+                    pos = offset.clone();
                 }
-                if (totalForce.lengthSq() === 0) break;
-                const acceleration = totalForce.divideScalar(mass);
-                currentVel.add(acceleration.multiplyScalar(timeStep));
-                currentPos.add(currentVel.clone().multiplyScalar(timeStep));
-                points.push(currentPos.clone());
+                pos.project(camera);
+                const x = (pos.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+                const y = (pos.y * -0.5 + 0.5) * renderer.domElement.clientHeight;
+                label.style.left = `${x}px`;
+                label.style.top = `${y}px`;
             }
-            trajectoryLine.geometry.setFromPoints(points);
+            // Animation loop for label
+            function animateLabel() {
+                updateLabel();
+                if (label.parentNode) requestAnimationFrame(animateLabel);
+            }
+            animateLabel();
         }
 
-        function fireCannon() {
-            if (!state.canFire) return;
-            const options = objectTypes[ui.ammoSelect.value];
-            const projectileMaterial = new THREE.MeshStandardMaterial({
-                color: options.color, 
-                emissive: options.color,
-                emissiveIntensity: options.emissiveIntensity,
-                roughness: 0.8, 
-                metalness: 0.2, 
-                transparent: true
+        // --- Shell Highlight Animation ---
+        function highlightShell(shellGroup) {
+            window._highlightedShell = shellGroup;
+            setTimeout(() => {
+                if (window._highlightedShell === shellGroup) window._highlightedShell = null;
+            }, 2000);
+        }
+
+        // --- DOM ELEMENTS ---
+        const welcomeOverlay = document.getElementById('welcome-overlay');
+        const startAppButton = document.getElementById('start-app-button');
+        const tableContainer = document.getElementById('periodic-table-container');
+        const table = document.getElementById('periodic-table');
+        const legend = document.getElementById('legend');
+        const canvasContainer = document.getElementById('canvas-container');
+        const backButton = document.getElementById('back-button');
+        const tourButton = document.getElementById('tour-button');
+        const atomInfo = document.getElementById('atom-info');
+        const particleInfo = document.getElementById('particle-info');
+
+        // --- 3D SCENE SETUP ---
+        let scene, camera, renderer, controls, clock, atomGroup, raycaster, selectedObject;
+        const electrons = [], nucleons = [];
+        let tourActive = false, tourStep = 0, tourTimeout;
+
+        // --- DATA ---
+        const periodicTableData = [ { n: 1, sy: 'H', na: 'Hydrogen', g: 1, p: 1, s: [1], nt: 0, c: 'nonmetal' }, { n: 2, sy: 'He', na: 'Helium', g: 18, p: 1, s: [2], nt: 2, c: 'noble-gas' }, { n: 3, sy: 'Li', na: 'Lithium', g: 1, p: 2, s: [2, 1], nt: 4, c: 'alkali-metal' }, { n: 4, sy: 'Be', na: 'Beryllium', g: 2, p: 2, s: [2, 2], nt: 5, c: 'alkaline-earth-metal' }, { n: 5, sy: 'B', na: 'Boron', g: 13, p: 2, s: [2, 3], nt: 6, c: 'metalloid' }, { n: 6, sy: 'C', na: 'Carbon', g: 14, p: 2, s: [2, 4], nt: 6, c: 'nonmetal' }, { n: 7, sy: 'N', na: 'Nitrogen', g: 15, p: 2, s: [2, 5], nt: 7, c: 'nonmetal' }, { n: 8, sy: 'O', na: 'Oxygen', g: 16, p: 2, s: [2, 6], nt: 8, c: 'nonmetal' }, { n: 9, sy: 'F', na: 'Fluorine', g: 17, p: 2, s: [2, 7], nt: 10, c: 'halogen' }, { n: 10, sy: 'Ne', na: 'Neon', g: 18, p: 2, s: [2, 8], nt: 10, c: 'noble-gas' }, { n: 11, sy: 'Na', na: 'Sodium', g: 1, p: 3, s: [2, 8, 1], nt: 12, c: 'alkali-metal' }, { n: 12, sy: 'Mg', na: 'Magnesium', g: 2, p: 3, s: [2, 8, 2], nt: 12, c: 'alkaline-earth-metal' }, { n: 13, sy: 'Al', na: 'Aluminum', g: 13, p: 3, s: [2, 8, 3], nt: 14, c: 'post-transition-metal' }, { n: 14, sy: 'Si', na: 'Silicon', g: 14, p: 3, s: [2, 8, 4], nt: 14, c: 'metalloid' }, { n: 15, sy: 'P', na: 'Phosphorus', g: 15, p: 3, s: [2, 8, 5], nt: 16, c: 'nonmetal' }, { n: 16, sy: 'S', na: 'Sulfur', g: 16, p: 3, s: [2, 8, 6], nt: 16, c: 'nonmetal' }, { n: 17, sy: 'Cl', na: 'Chlorine', g: 17, p: 3, s: [2, 8, 7], nt: 18, c: 'halogen' }, { n: 18, sy: 'Ar', na: 'Argon', g: 18, p: 3, s: [2, 8, 8], nt: 22, c: 'noble-gas' }, { n: 19, sy: 'K', na: 'Potassium', g: 1, p: 4, s: [2, 8, 8, 1], nt: 20, c: 'alkali-metal' }, { n: 20, sy: 'Ca', na: 'Calcium', g: 2, p: 4, s: [2, 8, 8, 2], nt: 20, c: 'alkaline-earth-metal' }, { n: 21, sy: 'Sc', na: 'Scandium', g: 3, p: 4, s: [2, 8, 9, 2], nt: 24, c: 'transition-metal' }, { n: 22, sy: 'Ti', na: 'Titanium', g: 4, p: 4, s: [2, 8, 10, 2], nt: 26, c: 'transition-metal' }, { n: 23, sy: 'V', na: 'Vanadium', g: 5, p: 4, s: [2, 8, 11, 2], nt: 28, c: 'transition-metal' }, { n: 24, sy: 'Cr', na: 'Chromium', g: 6, p: 4, s: [2, 8, 13, 1], nt: 28, c: 'transition-metal' }, { n: 25, sy: 'Mn', na: 'Manganese', g: 7, p: 4, s: [2, 8, 13, 2], nt: 30, c: 'transition-metal' }, { n: 26, sy: 'Fe', na: 'Iron', g: 8, p: 4, s: [2, 8, 14, 2], nt: 30, c: 'transition-metal' }, { n: 27, sy: 'Co', na: 'Cobalt', g: 9, p: 4, s: [2, 8, 15, 2], nt: 32, c: 'transition-metal' }, { n: 28, sy: 'Ni', na: 'Nickel', g: 10, p: 4, s: [2, 8, 16, 2], nt: 31, c: 'transition-metal' }, { n: 29, sy: 'Cu', na: 'Copper', g: 11, p: 4, s: [2, 8, 18, 1], nt: 34, c: 'transition-metal' }, { n: 30, sy: 'Zn', na: 'Zinc', g: 12, p: 4, s: [2, 8, 18, 2], nt: 35, c: 'transition-metal' }, { n: 31, sy: 'Ga', na: 'Gallium', g: 13, p: 4, s: [2, 8, 18, 3], nt: 39, c: 'post-transition-metal' }, { n: 32, sy: 'Ge', na: 'Germanium', g: 14, p: 4, s: [2, 8, 18, 4], nt: 41, c: 'metalloid' }, { n: 33, sy: 'As', na: 'Arsenic', g: 15, p: 4, s: [2, 8, 18, 5], nt: 42, c: 'metalloid' }, { n: 34, sy: 'Se', na: 'Selenium', g: 16, p: 4, s: [2, 8, 18, 6], nt: 45, c: 'nonmetal' }, { n: 35, sy: 'Br', na: 'Bromine', g: 17, p: 4, s: [2, 8, 18, 7], nt: 45, c: 'halogen' }, { n: 36, sy: 'Kr', na: 'Krypton', g: 18, p: 4, s: [2, 8, 18, 8], nt: 48, c: 'noble-gas' }, { n: 37, sy: 'Rb', na: 'Rubidium', g: 1, p: 5, s: [2, 8, 18, 8, 1], nt: 48, c: 'alkali-metal' }, { n: 38, sy: 'Sr', na: 'Strontium', g: 2, p: 5, s: [2, 8, 18, 8, 2], nt: 50, c: 'alkaline-earth-metal' }, { n: 39, sy: 'Y', na: 'Yttrium', g: 3, p: 5, s: [2, 8, 18, 9, 2], nt: 50, c: 'transition-metal' }, { n: 40, sy: 'Zr', na: 'Zirconium', g: 4, p: 5, s: [2, 8, 18, 10, 2], nt: 51, c: 'transition-metal' }, { n: 41, sy: 'Nb', na: 'Niobium', g: 5, p: 5, s: [2, 8, 18, 12, 1], nt: 52, c: 'transition-metal' }, { n: 42, sy: 'Mo', na: 'Molybdenum', g: 6, p: 5, s: [2, 8, 18, 13, 1], nt: 54, c: 'transition-metal' }, { n: 43, sy: 'Tc', na: 'Technetium', g: 7, p: 5, s: [2, 8, 18, 13, 2], nt: 55, c: 'transition-metal' }, { n: 44, sy: 'Ru', na: 'Ruthenium', g: 8, p: 5, s: [2, 8, 18, 15, 1], nt: 57, c: 'transition-metal' }, { n: 45, sy: 'Rh', na: 'Rhodium', g: 9, p: 5, s: [2, 8, 18, 16, 1], nt: 58, c: 'transition-metal' }, { n: 46, sy: 'Pd', na: 'Palladium', g: 10, p: 5, s: [2, 8, 18, 18], nt: 60, c: 'transition-metal' }, { n: 47, sy: 'Ag', na: 'Silver', g: 11, p: 5, s: [2, 8, 18, 18, 1], nt: 61, c: 'transition-metal' }, { n: 48, sy: 'Cd', na: 'Cadmium', g: 12, p: 5, s: [2, 8, 18, 18, 2], nt: 64, c: 'transition-metal' }, { n: 49, sy: 'In', na: 'Indium', g: 13, p: 5, s: [2, 8, 18, 18, 3], nt: 66, c: 'post-transition-metal' }, { n: 50, sy: 'Sn', na: 'Tin', g: 14, p: 5, s: [2, 8, 18, 18, 4], nt: 69, c: 'post-transition-metal' }, { n: 51, sy: 'Sb', na: 'Antimony', g: 15, p: 5, s: [2, 8, 18, 18, 5], nt: 71, c: 'metalloid' }, { n: 52, sy: 'Te', na: 'Tellurium', g: 16, p: 5, s: [2, 8, 18, 18, 6], nt: 75, c: 'metalloid' }, { n: 53, sy: 'I', na: 'Iodine', g: 17, p: 5, s: [2, 8, 18, 18, 7], nt: 74, c: 'halogen' }, { n: 54, sy: 'Xe', na: 'Xenon', g: 18, p: 5, s: [2, 8, 18, 18, 8], nt: 77, c: 'noble-gas' }, { n: 55, sy: 'Cs', na: 'Caesium', g: 1, p: 6, s: [2, 8, 18, 18, 8, 1], nt: 78, c: 'alkali-metal' }, { n: 56, sy: 'Ba', na: 'Barium', g: 2, p: 6, s: [2, 8, 18, 18, 8, 2], nt: 81, c: 'alkaline-earth-metal' }, { n: 57, sy: 'La', na: 'Lanthanum', g: 3, p: 9, s: [2, 8, 18, 18, 9, 2], nt: 82, c: 'lanthanide' }, { n: 58, sy: 'Ce', na: 'Cerium', g: 4, p: 9, s: [2, 8, 18, 19, 9, 2], nt: 82, c: 'lanthanide' }, { n: 59, sy: 'Pr', na: 'Praseodymium', g: 5, p: 9, s: [2, 8, 18, 21, 8, 2], nt: 82, c: 'lanthanide' }, { n: 60, sy: 'Nd', na: 'Neodymium', g: 6, p: 9, s: [2, 8, 18, 22, 8, 2], nt: 84, c: 'lanthanide' }, { n: 61, sy: 'Pm', na: 'Promethium', g: 7, p: 9, s: [2, 8, 18, 23, 8, 2], nt: 84, c: 'lanthanide' }, { n: 62, sy: 'Sm', na: 'Samarium', g: 8, p: 9, s: [2, 8, 18, 24, 8, 2], nt: 88, c: 'lanthanide' }, { n: 63, sy: 'Eu', na: 'Europium', g: 9, p: 9, s: [2, 8, 18, 25, 8, 2], nt: 89, c: 'lanthanide' }, { n: 64, sy: 'Gd', na: 'Gadolinium', g: 10, p: 9, s: [2, 8, 18, 25, 9, 2], nt: 93, c: 'lanthanide' }, { n: 65, sy: 'Tb', na: 'Terbium', g: 11, p: 9, s: [2, 8, 18, 27, 8, 2], nt: 94, c: 'lanthanide' }, { n: 66, sy: 'Dy', na: 'Dysprosium', g: 12, p: 9, s: [2, 8, 18, 28, 8, 2], nt: 97, c: 'lanthanide' }, { n: 67, sy: 'Ho', na: 'Holmium', g: 13, p: 9, s: [2, 8, 18, 29, 8, 2], nt: 98, c: 'lanthanide' }, { n: 68, sy: 'Er', na: 'Erbium', g: 14, p: 9, s: [2, 8, 18, 30, 8, 2], nt: 99, c: 'lanthanide' }, { n: 69, sy: 'Tm', na: 'Thulium', g: 15, p: 9, s: [2, 8, 18, 31, 8, 2], nt: 100, c: 'lanthanide' }, { n: 70, sy: 'Yb', na: 'Ytterbium', g: 16, p: 9, s: [2, 8, 18, 32, 8, 2], nt: 103, c: 'lanthanide' }, { n: 71, sy: 'Lu', na: 'Lutetium', g: 17, p: 9, s: [2, 8, 18, 32, 9, 2], nt: 104, c: 'lanthanide' }, { n: 72, sy: 'Hf', na: 'Hafnium', g: 4, p: 6, s: [2, 8, 18, 32, 10, 2], nt: 106, c: 'transition-metal' }, { n: 73, sy: 'Ta', na: 'Tantalum', g: 5, p: 6, s: [2, 8, 18, 32, 11, 2], nt: 108, c: 'transition-metal' }, { n: 74, sy: 'W', na: 'Tungsten', g: 6, p: 6, s: [2, 8, 18, 32, 12, 2], nt: 110, c: 'transition-metal' }, { n: 75, sy: 'Re', na: 'Rhenium', g: 7, p: 6, s: [2, 8, 18, 32, 13, 2], nt: 111, c: 'transition-metal' }, { n: 76, sy: 'Os', na: 'Osmium', g: 8, p: 6, s: [2, 8, 18, 32, 14, 2], nt: 114, c: 'transition-metal' }, { n: 77, sy: 'Ir', na: 'Iridium', g: 9, p: 6, s: [2, 8, 18, 32, 15, 2], nt: 115, c: 'transition-metal' }, { n: 78, sy: 'Pt', na: 'Platinum', g: 10, p: 6, s: [2, 8, 18, 32, 17, 1], nt: 117, c: 'transition-metal' }, { n: 79, sy: 'Au', na: 'Gold', g: 11, p: 6, s: [2, 8, 18, 32, 18, 1], nt: 118, c: 'transition-metal' }, { n: 80, sy: 'Hg', na: 'Mercury', g: 12, p: 6, s: [2, 8, 18, 32, 18, 2], nt: 121, c: 'transition-metal' }, { n: 81, sy: 'Tl', na: 'Thallium', g: 13, p: 6, s: [2, 8, 18, 32, 18, 3], nt: 123, c: 'post-transition-metal' }, { n: 82, sy: 'Pb', na: 'Lead', g: 14, p: 6, s: [2, 8, 18, 32, 18, 4], nt: 125, c: 'post-transition-metal' }, { n: 83, sy: 'Bi', na: 'Bismuth', g: 15, p: 6, s: [2, 8, 18, 32, 18, 5], nt: 126, c: 'post-transition-metal' }, { n: 84, sy: 'Po', na: 'Polonium', g: 16, p: 6, s: [2, 8, 18, 32, 18, 6], nt: 125, c: 'post-transition-metal' }, { n: 85, sy: 'At', na: 'Astatine', g: 17, p: 6, s: [2, 8, 18, 32, 18, 7], nt: 125, c: 'metalloid' }, { n: 86, sy: 'Rn', na: 'Radon', g: 18, p: 6, s: [2, 8, 18, 32, 18, 8], nt: 136, c: 'noble-gas' }, { n: 87, sy: 'Fr', na: 'Francium', g: 1, p: 7, s: [2, 8, 18, 32, 18, 8, 1], nt: 136, c: 'alkali-metal' }, { n: 88, sy: 'Ra', na: 'Radium', g: 2, p: 7, s: [2, 8, 18, 32, 18, 8, 2], nt: 138, c: 'alkaline-earth-metal' }, { n: 89, sy: 'Ac', na: 'Actinium', g: 3, p: 10, s: [2, 8, 18, 32, 18, 9, 2], nt: 138, c: 'actinide' }, { n: 90, sy: 'Th', na: 'Thorium', g: 4, p: 10, s: [2, 8, 18, 32, 18, 10, 2], nt: 142, c: 'actinide' }, { n: 91, sy: 'Pa', na: 'Protactinium', g: 5, p: 10, s: [2, 8, 18, 32, 20, 9, 2], nt: 140, c: 'actinide' }, { n: 92, sy: 'U', na: 'Uranium', g: 6, p: 10, s: [2, 8, 18, 32, 21, 9, 2], nt: 146, c: 'actinide' }, { n: 93, sy: 'Np', na: 'Neptunium', g: 7, p: 10, s: [2, 8, 18, 32, 22, 9, 2], nt: 144, c: 'actinide' }, { n: 94, sy: 'Pu', na: 'Plutonium', g: 8, p: 10, s: [2, 8, 18, 32, 24, 8, 2], nt: 150, c: 'actinide' }, { n: 95, sy: 'Am', na: 'Americium', g: 9, p: 10, s: [2, 8, 18, 32, 25, 8, 2], nt: 148, c: 'actinide' }, { n: 96, sy: 'Cm', na: 'Curium', g: 10, p: 10, s: [2, 8, 18, 32, 25, 9, 2], nt: 151, c: 'actinide' }, { n: 97, sy: 'Bk', na: 'Berkelium', g: 11, p: 10, s: [2, 8, 18, 32, 27, 8, 2], nt: 150, c: 'actinide' }, { n: 98, sy: 'Cf', na: 'Californium', g: 12, p: 10, s: [2, 8, 18, 32, 28, 8, 2], nt: 153, c: 'actinide' }, { n: 99, sy: 'Es', na: 'Einsteinium', g: 13, p: 10, s: [2, 8, 18, 32, 29, 8, 2], nt: 153, c: 'actinide' }, { n: 100, sy: 'Fm', na: 'Fermium', g: 14, p: 10, s: [2, 8, 18, 32, 30, 8, 2], nt: 157, c: 'actinide' }, { n: 101, sy: 'Md', na: 'Mendelevium', g: 15, p: 10, s: [2, 8, 18, 32, 31, 8, 2], nt: 157, c: 'actinide' }, { n: 102, sy: 'No', na: 'Nobelium', g: 16, p: 10, s: [2, 8, 18, 32, 32, 8, 2], nt: 157, c: 'actinide' }, { n: 103, sy: 'Lr', na: 'Lawrencium', g: 17, p: 10, s: [2, 8, 18, 32, 32, 8, 3], nt: 159, c: 'actinide' }, { n: 104, sy: 'Rf', na: 'Rutherfordium', g: 4, p: 7, s: [2, 8, 18, 32, 32, 10, 2], nt: 161, c: 'transition-metal' }, { n: 105, sy: 'Db', na: 'Dubnium', g: 5, p: 7, s: [2, 8, 18, 32, 32, 11, 2], nt: 163, c: 'transition-metal' }, { n: 106, sy: 'Sg', na: 'Seaborgium', g: 6, p: 7, s: [2, 8, 18, 32, 32, 12, 2], nt: 165, c: 'transition-metal' }, { n: 107, sy: 'Bh', na: 'Bohrium', g: 7, p: 7, s: [2, 8, 18, 32, 32, 13, 2], nt: 167, c: 'transition-metal' }, { n: 108, sy: 'Hs', na: 'Hassium', g: 8, p: 7, s: [2, 8, 18, 32, 32, 14, 2], nt: 169, c: 'transition-metal' }, { n: 109, sy: 'Mt', na: 'Meitnerium', g: 9, p: 7, s: [2, 8, 18, 32, 32, 15, 2], nt: 168, c: 'unknown' }, { n: 110, sy: 'Ds', na: 'Darmstadtium', g: 10, p: 7, s: [2, 8, 18, 32, 32, 17, 1], nt: 171, c: 'unknown' }, { n: 111, sy: 'Rg', na: 'Roentgenium', g: 11, p: 7, s: [2, 8, 18, 32, 32, 18, 1], nt: 171, c: 'unknown' }, { n: 112, sy: 'Cn', na: 'Copernicium', g: 12, p: 7, s: [2, 8, 18, 32, 32, 18, 2], nt: 173, c: 'transition-metal' }, { n: 113, sy: 'Nh', na: 'Nihonium', g: 13, p: 7, s: [2, 8, 18, 32, 32, 18, 3], nt: 171, c: 'unknown' }, { n: 114, sy: 'Fl', na: 'Flerovium', g: 14, p: 7, s: [2, 8, 18, 32, 32, 18, 4], nt: 175, c: 'post-transition-metal' }, { n: 115, sy: 'Mc', na: 'Moscovium', g: 15, p: 7, s: [2, 8, 18, 32, 32, 18, 5], nt: 173, c: 'unknown' }, { n: 116, sy: 'Lv', na: 'Livermorium', g: 16, p: 7, s: [2, 8, 18, 32, 32, 18, 6], nt: 177, c: 'unknown' }, { n: 117, sy: 'Ts', na: 'Tennessine', g: 17, p: 7, s: [2, 8, 18, 32, 32, 18, 7], nt: 177, c: 'unknown' }, { n: 118, sy: 'Og', na: 'Oganesson', g: 18, p: 7, s: [2, 8, 18, 32, 32, 18, 8], nt: 176, c: 'unknown' }, ];
+        const categoryMap = { 'nonmetal': 'Nonmetal', 'noble-gas': 'Noble Gas', 'alkali-metal': 'Alkali Metal', 'alkaline-earth-metal': 'Alkaline Earth Metal', 'metalloid': 'Metalloid', 'halogen': 'Halogen', 'post-transition-metal': 'Post-Transition Metal', 'transition-metal': 'Transition Metal', 'lanthanide': 'Lanthanide', 'actinide': 'Actinide', 'unknown': 'Unknown Properties' };
+        const particleDetails = {
+            proton: { title: "Proton", text: "A subatomic particle with a positive electric charge (+1e). The number of protons in an atom's nucleus determines its atomic number and which element it is." },
+            neutron: { title: "Neutron", text: "A subatomic particle with no net electric charge. Neutrons are found in the nucleus and contribute to the atom's mass. The number of neutrons can vary, creating different isotopes of an element." },
+            electron: { title: "Electron", text: "A subatomic particle with a negative electric charge (-1e). Electrons orbit the nucleus in specific energy levels called shells. The arrangement of electrons determines the chemical properties of an atom." }
+        };
+
+        // --- INITIALIZATION ---
+        function init() {
+            createPeriodicTable();
+            createLegend();
+            init3DScene();
+            addEventListeners();
+        }
+
+        function addEventListeners() {
+            startAppButton.addEventListener('click', () => {
+                welcomeOverlay.style.opacity = '0';
+                setTimeout(() => welcomeOverlay.style.display = 'none', 500);
             });
-            const projectile = new THREE.Mesh(new THREE.SphereGeometry(options.radius, 32, 32), projectileMaterial);
-            projectile.layers.enable(BLOOM_SCENE);
-
-            const startPos = new THREE.Vector3(0, 0, -12.5);
-            barrelGroup.localToWorld(startPos);
-            
-            let fireDirection;
-
-            if (state.cameraMode === 'aiming') {
-                const aimDirection = new THREE.Vector3();
-                barrelGroup.getWorldDirection(aimDirection);
-                aimDirection.negate();
-                const jitter = new THREE.Vector3( (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1 );
-                fireDirection = new THREE.Vector3().addVectors(aimDirection, jitter).normalize();
-            } else { 
-                const targetBh = blackHoles[0];
-                const toBh = new THREE.Vector3().subVectors(targetBh.mesh.position, startPos).normalize();
-                const up = new THREE.Vector3(0, 1, 0);
-                let perp = new THREE.Vector3().crossVectors(toBh, up).normalize();
-                if (perp.lengthSq() < 0.01) { perp.set(1, 0, 0); }
-                perp.applyAxisAngle(toBh, Math.random() * Math.PI * 2);
-                perp.multiplyScalar(0.3 + Math.random() * 1.2);
-                fireDirection = toBh.clone().add(perp).normalize();
-            }
-
-            projectile.position.copy(startPos);
-            scene.add(projectile);
-            const velocity = fireDirection.clone().multiplyScalar(state.cannonPower);
-            const newId = `obj_${state.objectIdCounter++}`;
-
-            if (options.isBlackHole) {
-                const newBh = { id: newId, name: 'Fired BH', mesh: projectile, mass: options.mass, radius: options.radius, velocity: velocity };
-                blackHoles.push(newBh);
-                const newDisk = new THREE.Points(createDiskGeometry(options.radius + 2, 20, 0xcccccc, 0xaaaaaa), new THREE.PointsMaterial({ size: 0.3, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8, depthWrite: false }));
-                projectile.add(newDisk);
-            } else {
-                const obj = { id: newId, name: options.name, mesh: projectile, velocity: velocity, mass: options.mass, originalColor: new THREE.Color(options.color), options: options };
-                celestialObjects.push(obj);
-                if (options.isStar) {
-                    const starLight = new THREE.PointLight(options.color, 2, 800);
-                    obj.light = starLight;
-                    projectile.add(starLight);
+            backButton.addEventListener('click', showPeriodicTable);
+            tourButton.addEventListener('click', () => {
+                if (tourActive) {
+                    endTour();
+                } else {
+                    startTour();
                 }
-            }
-            updateObjectCount();
-            updateMassEditor();
-            state.canFire = false;
-            state.recoilOffset = 3; 
-            setTimeout(() => { state.canFire = true; }, 300);
-        }
-        
-        function updatePhysics(delta) {
-            for (let i = blackHoles.length - 1; i >= 0; i--) {
-                const bh1 = blackHoles[i];
-                let totalForce = new THREE.Vector3();
-                for (let j = 0; j < blackHoles.length; j++) {
-                    if (i === j) continue;
-                    const bh2 = blackHoles[j];
-                    const distanceVec = new THREE.Vector3().subVectors(bh2.mesh.position, bh1.mesh.position);
-                    const distanceSq = distanceVec.lengthSq();
-                    if (distanceSq < (bh1.radius + bh2.radius) * (bh1.radius + bh2.radius)) {
-                        const bigger = bh1.mass > bh2.mass ? bh1 : bh2; const smaller = bh1.mass > bh2.mass ? bh2 : bh1;
-                        const combinedMomentum = new THREE.Vector3().addScaledVector(bigger.velocity, bigger.mass).addScaledVector(smaller.velocity, smaller.mass);
-                        bigger.mass += smaller.mass; bigger.velocity = combinedMomentum.divideScalar(bigger.mass);
-                        const scaleFactor = Math.cbrt(bigger.mass / (bigger.mass - smaller.mass));
-                        bigger.radius *= scaleFactor; bigger.mesh.scale.multiplyScalar(scaleFactor);
-                        scene.remove(smaller.mesh);
-                        const removedIndex = blackHoles.findIndex(bh => bh.id === smaller.id);
-                        if (removedIndex > -1) blackHoles.splice(removedIndex, 1);
-                        if (j < i) i--;
-                        updateMassEditor(); continue;
-                    }
-                    const forceMagnitude = (state.gravityConstant * bh1.mass * bh2.mass) / distanceSq;
-                    totalForce.add(distanceVec.normalize().multiplyScalar(forceMagnitude));
-                }
-                const acceleration = totalForce.divideScalar(bh1.mass);
-                bh1.velocity.add(acceleration.multiplyScalar(delta));
-            }
-            for (const bh of blackHoles) {
-                if (bh.id !== 'smbh') bh.mesh.position.add(bh.velocity.clone().multiplyScalar(delta));
-            }
-
-            const redColor = new THREE.Color(0xff0000);
-            for (let i = celestialObjects.length - 1; i >= 0; i--) {
-                const obj = celestialObjects[i];
-                let totalForce = new THREE.Vector3(), closestBh = null, closestDistSq = Infinity;
-                for (const bh of blackHoles) {
-                    const distanceVec = new THREE.Vector3().subVectors(bh.mesh.position, obj.mesh.position);
-                    const distanceSq = distanceVec.lengthSq();
-                    const forceMagnitude = (state.gravityConstant * bh.mass * obj.mass) / distanceSq;
-                    totalForce.add(distanceVec.clone().normalize().multiplyScalar(forceMagnitude));
-                    if (distanceSq < closestDistSq) { closestDistSq = distanceSq; closestBh = bh; }
-                }
-                
-                const plungeStartDistSq = (closestBh.radius * 3) * (closestBh.radius * 3);
-                if (closestDistSq < plungeStartDistSq) {
-                    const plungeFactor = 1 - ((closestDistSq - (closestBh.radius*closestBh.radius)) / (plungeStartDistSq - (closestBh.radius*closestBh.radius)));
-                    const clampedFactor = Math.min(1, Math.max(0, plungeFactor));
-                    obj.mesh.lookAt(closestBh.mesh.position);
-                    const stretch = 1 + clampedFactor * 15, squash = Math.max(0.01, 1 - clampedFactor * 0.9);
-                    obj.mesh.scale.set(squash, stretch, squash);
-                    obj.mesh.material.color.lerpColors(obj.originalColor, redColor, clampedFactor * 0.8);
-                    obj.mesh.material.opacity = 1 - clampedFactor;
-                    if (clampedFactor > 0.99) {
-                        transitionQueue.push({ objectData: obj.options, entryTime: clock.getElapsedTime() });
-                        if (obj.light) obj.mesh.remove(obj.light);
-                        scene.remove(obj.mesh);
-                        celestialObjects.splice(i, 1);
-                        updateObjectCount(); updateMassEditor(); continue;
-                    }
-                }
-                const acceleration = totalForce.divideScalar(obj.mass);
-                obj.velocity.add(acceleration.multiplyScalar(delta));
-                obj.mesh.position.add(obj.velocity.clone().multiplyScalar(delta));
-            }
-
-            for (let i = transitionQueue.length - 1; i >= 0; i--) {
-                const item = transitionQueue[i];
-                if (clock.getElapsedTime() - item.entryTime > 2) {
-                    createWhiteHole(item.objectData);
-                    transitionQueue.splice(i, 1);
-                }
-            }
-            for (let i = whiteHoles.length - 1; i >= 0; i--) {
-                const wh = whiteHoles[i];
-                wh.lifetime -= delta;
-                wh.mesh.material.opacity = Math.max(0, wh.lifetime / 2);
-                if (wh.lifetime <= 0) { scene.remove(wh.mesh); whiteHoles.splice(i, 1); }
-            }
+            });
+            renderer.domElement.addEventListener('click', onCanvasClick);
         }
 
-        function createWhiteHole(objectData) {
-            const position = new THREE.Vector3(THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000), THREE.MathUtils.randFloatSpread(1000));
-            const whMesh = new THREE.Mesh(new THREE.SphereGeometry(15, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending }));
-            whMesh.position.copy(position);
-            whMesh.layers.enable(BLOOM_SCENE);
-            scene.add(whMesh);
-            whiteHoles.push({ mesh: whMesh, lifetime: 2.0 });
-            const projectile = new THREE.Mesh(new THREE.SphereGeometry(objectData.radius, 32, 32), new THREE.MeshStandardMaterial({color: objectData.color, emissive: objectData.color, emissiveIntensity: objectData.emissiveIntensity, roughness: 0.8, metalness: 0.2}));
-            projectile.position.copy(position);
-            projectile.layers.enable(BLOOM_SCENE);
-            scene.add(projectile);
-            const velocity = new THREE.Vector3().randomDirection().multiplyScalar(150);
-            const obj = { id: `obj_${state.objectIdCounter++}`, name: objectData.name, mesh: projectile, velocity: velocity, mass: objectData.mass, originalColor: new THREE.Color(objectData.color), options: objectData };
-            celestialObjects.push(obj);
-            if (objectData.isStar) {
-                const starLight = new THREE.PointLight(objectData.color, 2, 800);
-                obj.light = starLight;
-                projectile.add(starLight);
-            }
-            updateObjectCount(); updateMassEditor();
-        }
-
-        const ui = {
-            gravitySlider: document.getElementById('gravity-slider'), gravityInput: document.getElementById('gravity-input'),
-            powerSlider: document.getElementById('power-slider'), powerInput: document.getElementById('power-input'),
-            ammoSelect: document.getElementById('ammo-select'), objectCountEl: document.getElementById('object-count-info'),
-            controlsInfoEl: document.getElementById('controls-info'), crosshair: document.getElementById('crosshair'),
-            mainControls: document.getElementById('main-controls-container'), mobileControls: document.getElementById('mobile-controls'),
-            toggleAimBtn: document.getElementById('toggle-aim-mode-btn'), massEditorContent: document.getElementById('mass-editor-content'),
-            toggleControlsBtn: document.getElementById('toggle-controls-btn'), collapsibleControls: document.getElementById('collapsible-controls'),
-            prevAmmoBtn: document.getElementById('prev-ammo-btn'), nextAmmoBtn: document.getElementById('next-ammo-btn'),
-            currentAmmoName: document.getElementById('current-ammo-name'),
-            mainFireBtn: document.getElementById('main-fire-btn')
-        };
-
-        function updateObjectCount() { ui.objectCountEl.textContent = `Objects: ${(celestialObjects.length + blackHoles.length - 2)}`; }
-
-        function updateMassEditor() {
-            if (state.isMobile) return;
-            ui.massEditorContent.innerHTML = '';
-            const allObjects = [...blackHoles, ...celestialObjects];
-            allObjects.forEach(obj => {
-                const li = document.createElement('div');
-                li.className = 'flex items-center justify-between mb-2 text-sm';
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = `${obj.name} ${obj.id.startsWith('obj_') ? obj.id.split('_')[1] : ''}`;
-                const massInput = document.createElement('input');
-                massInput.type = 'number';
-                massInput.value = obj.mass.toFixed(0);
-                massInput.className = 'w-24 bg-gray-800 border border-gray-600 text-white rounded-md p-1 text-center';
-                massInput.addEventListener('change', (e) => {
-                    const newMass = parseFloat(e.target.value);
-                    if (!isNaN(newMass) && newMass > 0) obj.mass = newMass;
-                });
-                li.appendChild(nameSpan); li.appendChild(massInput);
-                ui.massEditorContent.appendChild(li);
+        // --- PERIODIC TABLE & LEGEND ---
+        function createPeriodicTable() {
+            periodicTableData.forEach(el => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'element';
+                elementDiv.dataset.category = el.c;
+                elementDiv.style.gridColumnStart = el.g;
+                elementDiv.style.gridRowStart = el.p;
+                elementDiv.style.backgroundColor = `var(--${el.c})`;
+                elementDiv.innerHTML = `<div class="number">${el.n}</div><div class="symbol">${el.sy}</div><div class="name">${el.na}</div>`;
+                elementDiv.addEventListener('click', () => selectElement(el));
+                table.appendChild(elementDiv);
             });
         }
 
-        function setCameraMode(mode) {
-            state.cameraMode = mode;
-            if (mode === 'aiming') {
-                activeCamera = cannonCamera; ui.crosshair.style.display = 'block';
-                ui.mainControls.style.opacity = '0.5';
-                if (state.isMobile) {
-                    ui.mobileControls.style.display = 'flex';
-                    setTimeout(() => ui.mobileControls.classList.add('visible'), 50);
-                    ui.toggleAimBtn.textContent = 'Exit';
-                    ui.controlsInfoEl.textContent = 'Use joysticks to aim and move.';
-                } else {
-                    renderer.domElement.requestPointerLock();
-                    ui.controlsInfoEl.textContent = 'WASD/Mouse | Click to Fire | Esc to Exit';
-                }
-            } else {
-                activeCamera = cinematicCamera; ui.crosshair.style.display = 'none';
-                ui.mainControls.style.opacity = '1';
-                if (state.isMobile) {
-                    ui.mobileControls.classList.remove('visible');
-                    setTimeout(() => ui.mobileControls.style.display = 'none', 400);
-                    ui.toggleAimBtn.textContent = 'Aim';
-                    ui.controlsInfoEl.textContent = 'Tap "Aim" to control cannon.';
-                } else {
-                    if(document.pointerLockElement) document.exitPointerLock();
-                    ui.controlsInfoEl.textContent = 'Click simulation to aim.';
-                }
+        function createLegend() {
+            for (const category in categoryMap) {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.dataset.category = category;
+                item.innerHTML = `<div class="legend-color" style="background-color: var(--${category});"></div><span class="legend-text">${categoryMap[category]}</span>`;
+                item.addEventListener('mouseenter', () => highlightCategory(category));
+                item.addEventListener('mouseleave', () => highlightCategory(null));
+                legend.appendChild(item);
             }
-            renderPass.camera = activeCamera;
         }
 
-        renderer.domElement.addEventListener('click', () => { if (!state.isMobile && state.cameraMode === 'cinematic') setCameraMode('aiming'); });
-        document.addEventListener('pointerlockchange', () => { if (!state.isMobile && document.pointerLockElement !== renderer.domElement && state.cameraMode === 'aiming') setCameraMode('cinematic'); });
-        document.addEventListener('keydown', (e) => { state.keyState[e.code] = true; });
-        document.addEventListener('keyup', (e) => { state.keyState[e.code] = false; });
-        document.addEventListener('mousemove', (e) => { if (state.cameraMode !== 'aiming' || state.isMobile) return; cannon.rotation.y -= e.movementX * 0.002; barrelGroup.rotation.x = Math.max(-Math.PI / 2 + 0.2, Math.min(Math.PI / 2 - 0.2, barrelGroup.rotation.x - e.movementY * 0.002)); });
-        renderer.domElement.addEventListener('mousedown', (e) => { if (state.cameraMode === 'aiming' && !state.isMobile && e.button === 0) fireCannon(); });
-        document.addEventListener('wheel', (e) => { if (state.cameraMode !== 'aiming' || state.isMobile) return; let currentIndex = ui.ammoSelect.selectedIndex; currentIndex += Math.sign(e.deltaY); if (currentIndex < 0) currentIndex = ui.ammoSelect.options.length - 1; else if (currentIndex >= ui.ammoSelect.options.length) currentIndex = 0; ui.ammoSelect.selectedIndex = currentIndex; });
-        ui.mainFireBtn.addEventListener('click', fireCannon);
-        ui.toggleAimBtn.addEventListener('click', (e) => { e.stopPropagation(); setCameraMode(state.cameraMode === 'cinematic' ? 'aiming' : 'cinematic'); });
-
-        function setupJoystick(elementId, onMove) {
-            const container = document.getElementById(elementId); if (!container) return;
-            const handle = container.querySelector('.joystick-handle');
-            let activeTouchId = null, rect;
-            const updateRect = () => { rect = container.getBoundingClientRect(); };
-            updateRect(); window.addEventListener('resize', updateRect);
-            container.addEventListener('touchstart', (e) => { e.preventDefault(); if (activeTouchId === null) { activeTouchId = e.changedTouches[0].identifier; updateRect(); } }, { passive: false });
-            container.addEventListener('touchmove', (e) => { e.preventDefault(); for (let touch of e.changedTouches) { if (touch.identifier === activeTouchId) { const center = { x: rect.width / 2, y: rect.height / 2 }; let x = touch.clientX - rect.left, y = touch.clientY - rect.top; let deltaX = x - center.x, deltaY = y - center.y; let distance = Math.sqrt(deltaX*deltaX + deltaY*deltaY); let maxDist = center.x; if (distance > maxDist) { deltaX = (deltaX / distance) * maxDist; deltaY = (deltaY / distance) * maxDist; } handle.style.transform = `translate(${deltaX}px, ${deltaY}px)`; onMove(deltaX / maxDist, deltaY / maxDist); } } }, { passive: false });
-            const endTouch = (e) => { for (let touch of e.changedTouches) { if (touch.identifier === activeTouchId) { activeTouchId = null; handle.style.transform = 'translate(-50%, -50%)'; onMove(0, 0); break; } } };
-            container.addEventListener('touchend', endTouch); container.addEventListener('touchcancel', endTouch);
+        function highlightCategory(category) {
+            table.querySelectorAll('.element').forEach(el => {
+                if (category === null) {
+                    el.style.opacity = '1';
+                } else {
+                    el.style.opacity = el.dataset.category === category ? '1' : '0.3';
+                }
+            });
         }
 
-        let moveInput = { x: 0, y: 0 }, aimInput = { x: 0, y: 0 };
-        if (state.isMobile) {
-            setupJoystick('joystick-move', (x, y) => { moveInput = { x, y }; });
-            setupJoystick('joystick-aim', (x, y) => { aimInput = { x, y }; });
-            document.getElementById('mobile-fire-button').addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); fireCannon(); }, { passive: false });
-        }
-
-        ui.gravitySlider.addEventListener('input', (e) => { ui.gravityInput.value = e.target.value; updateGravity(parseFloat(e.target.value)); });
-        ui.gravityInput.addEventListener('change', (e) => { ui.gravitySlider.value = e.target.value; updateGravity(parseFloat(e.target.value)); });
-        ui.powerSlider.addEventListener('input', (e) => { ui.powerInput.value = e.target.value; state.cannonPower = parseFloat(e.target.value); });
-        ui.powerInput.addEventListener('change', (e) => { ui.powerSlider.value = e.target.value; state.cannonPower = parseFloat(e.target.value); });
-        
-        document.getElementById('clear-btn').addEventListener('click', () => {
-            location.reload();
-        });
-
-        if (state.isMobile) {
-            ui.collapsibleControls.classList.add('collapsed');
-            ui.toggleControlsBtn.textContent = 'Show';
-        }
-
-        ui.toggleControlsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isCollapsed = ui.collapsibleControls.classList.toggle('collapsed');
-            ui.toggleControlsBtn.textContent = isCollapsed ? 'Show' : 'Hide';
-        });
-
-        function updateAmmoUI() {
-            const selectedOption = ui.ammoSelect.options[ui.ammoSelect.selectedIndex];
-            ui.currentAmmoName.textContent = selectedOption.text;
-        }
-
-        ui.ammoSelect.addEventListener('change', updateAmmoUI);
-        ui.prevAmmoBtn.addEventListener('click', () => {
-            ui.ammoSelect.selectedIndex = (ui.ammoSelect.selectedIndex - 1 + ui.ammoSelect.options.length) % ui.ammoSelect.options.length;
-            updateAmmoUI();
-        });
-        ui.nextAmmoBtn.addEventListener('click', () => {
-            ui.ammoSelect.selectedIndex = (ui.ammoSelect.selectedIndex + 1) % ui.ammoSelect.options.length;
-            updateAmmoUI();
-        });
-
-        function updateGravity(newGravity) {
-            if (isNaN(newGravity) || newGravity <= 0) return;
-            const scaleFactor = Math.sqrt(newGravity / state.lastGravityConstant);
-            [...blackHoles, ...celestialObjects].forEach(obj => obj.velocity.multiplyScalar(scaleFactor));
-            state.gravityConstant = newGravity;
-            state.lastGravityConstant = newGravity > 0 ? newGravity : 0.1;
-        }
-
-        window.addEventListener('resize', () => {
-            const aspect = window.innerWidth / window.innerHeight;
-            cinematicCamera.aspect = aspect; cinematicCamera.updateProjectionMatrix();
-            cannonCamera.aspect = aspect; cannonCamera.updateProjectionMatrix();
+        // --- 3D SCENE ---
+        function init3DScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 20;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            bloomComposer.setSize(window.innerWidth, window.innerHeight);
-            finalComposer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        function darkenNonBloomed(obj) {
-            if ((obj.isMesh || obj.isPoints) && bloomLayer.test(obj.layers) === false) {
-                materials[obj.uuid] = obj.material;
-                obj.material = darkMaterial;
-            }
-        }
-        
-        function restoreMaterials(obj) {
-            if (materials[obj.uuid]) {
-                obj.material = materials[obj.uuid];
-                delete materials[obj.uuid];
-            }
+            renderer.setPixelRatio(window.devicePixelRatio);
+            canvasContainer.appendChild(renderer.domElement);
+            clock = new THREE.Clock();
+            raycaster = new THREE.Raycaster();
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const pointLight = new THREE.PointLight(0xffffff, 0.9, 200);
+            camera.add(pointLight);
+            scene.add(camera);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.enabled = false;
+            window.addEventListener('resize', onWindowResize, false);
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = Math.min(0.05, clock.getDelta());
-            const elapsedTime = clock.getElapsedTime();
-            if (state.cameraMode === 'cinematic') {
-                const time = elapsedTime * 0.08;
-                cinematicCamera.position.x = Math.sin(time * 0.7) * 600;
-                cinematicCamera.position.y = Math.cos(time * 0.5) * 350;
-                cinematicCamera.position.z = Math.cos(time * 0.9) * 600;
-                cinematicCamera.lookAt(smbh.position);
-            }
-            updateCannon(delta);
-            if (state.recoilOffset > 0) { cannonBarrel.position.z = state.recoilOffset; state.recoilOffset -= 15 * delta; } else { cannonBarrel.position.z = 0; }
-            smbhAccretionDisk.rotation.y += 0.0005;
-            orbitingBhAccretionDisk.rotation.y += 0.001;
-            updatePhysics(delta);
-            if(trajectoryLine) {
-                if(state.cameraMode === 'aiming') updateTrajectory();
-                trajectoryLine.visible = state.cameraMode === 'aiming' && state.canFire;
-            }
-
-            // Selective bloom rendering
-            scene.traverse(darkenNonBloomed);
-            bloomComposer.render();
-            scene.traverse(restoreMaterials);
-            finalComposer.render();
+        // --- VIEW TRANSITIONS ---
+        function selectElement(elementData) {
+            console.log('selectElement called for:', elementData);
+            tableContainer.style.opacity = '0';
+            tableContainer.style.transform = 'scale(2)';
+            tableContainer.style.pointerEvents = 'none';
+            // Ensure canvas is visible immediately for debugging
+            setTimeout(() => {
+                canvasContainer.style.visibility = 'visible';
+                canvasContainer.style.opacity = '1';
+                [backButton, tourButton, atomInfo].forEach(el => {
+                    el.style.display = 'block';
+                    setTimeout(() => el.style.opacity = '1', 50);
+                });
+                controls.enabled = true;
+                createAtom(elementData);
+                // Fix: Set camera position directly, no tween
+                let targetZ = Math.max(elementData.s.length * 5, 20);
+                camera.position.set(0, 0, targetZ);
+                controls.target.set(0, 0, 0);
+                controls.update();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.render(scene, camera);
+                // Debug: log camera and atomGroup
+                console.log('Camera position after fix:', camera.position);
+                console.log('Atom group:', atomGroup);
+                if (!scene.children.includes(atomGroup)) {
+                    console.warn('atomGroup not in scene!');
+                }
+                if (!canvasContainer.contains(renderer.domElement)) {
+                    console.warn('renderer.domElement not attached!');
+                }
+                if (canvasContainer.style.visibility !== 'visible' || canvasContainer.style.opacity !== '1') {
+                    console.warn('canvasContainer not visible!');
+                }
+                if (!atomGroup || atomGroup.children.length === 0) {
+                    console.warn('atomGroup has no children!');
+                }
+            }, 500);
         }
-        
-        function updateCannon(delta) {
-            const moveSpeed = 100 * delta, aimSpeed = 1.5 * delta;
-            const forward = new THREE.Vector3(), right = new THREE.Vector3();
-            cannon.getWorldDirection(forward);
-            right.crossVectors(cannon.up, forward);
-            if (state.cameraMode === 'aiming') {
-                if (state.isMobile) {
-                    if (moveInput.y !== 0) cannon.position.addScaledVector(forward, -moveInput.y * moveSpeed);
-                    if (moveInput.x !== 0) cannon.position.addScaledVector(right, moveInput.x * moveSpeed);
-                    cannon.rotation.y -= aimInput.x * aimSpeed;
-                    barrelGroup.rotation.x = Math.max(-Math.PI / 2 + 0.2, Math.min(Math.PI / 2 - 0.2, barrelGroup.rotation.x - aimInput.y * aimSpeed));
+
+        function showPeriodicTable() {
+            endTour();
+            [backButton, tourButton, atomInfo, particleInfo].forEach(el => el.style.opacity = '0');
+            canvasContainer.style.opacity = '0';
+            controls.enabled = false;
+            setTimeout(() => {
+                [backButton, tourButton, atomInfo, particleInfo].forEach(el => el.style.display = 'none');
+                canvasContainer.style.visibility = 'hidden';
+                tableContainer.style.opacity = '1';
+                tableContainer.style.transform = 'scale(1)';
+                tableContainer.style.pointerEvents = 'auto';
+                clearScene();
+            }, 1000);
+        }
+
+        // --- ATOM CREATION ---
+        function createAtom(elementData) {
+            console.log('createAtom called for:', elementData);
+            clearScene();
+            atomGroup = new THREE.Group();
+            scene.add(atomGroup);
+            atomInfo.innerHTML = `<h2>${elementData.na} (${elementData.sy})</h2><p>Protons: ${elementData.n}</p><p>Neutrons: ${elementData.nt}</p><p>Electrons: ${elementData.n}</p>`;
+            createNucleus(elementData.n, elementData.nt);
+            createElectronShells(elementData.s);
+            // Debug: log atomGroup children
+            console.log('atomGroup children after creation:', atomGroup.children);
+            renderer.render(scene, camera);
+        }
+
+        function clearScene() {
+            if (atomGroup) {
+                scene.remove(atomGroup);
+                atomGroup.traverse(child => {
+                    if (child.isMesh) {
+                        child.geometry.dispose();
+                        if (child.material.isMaterial) {
+                            child.material.dispose();
+                        }
+                    }
+                });
+            }
+            atomGroup = null; // Reset the group
+            electrons.length = 0;
+            nucleons.length = 0;
+            selectedObject = null;
+            // Debug: log scene children after clear
+            console.log('Scene children after clear:', scene.children);
+        }
+
+        function createNucleus(numProtons, numNeutrons) {
+            const protonGeo = new THREE.SphereGeometry(0.3, 32, 32);
+            const neutronGeo = new THREE.SphereGeometry(0.32, 32, 32);
+            const protonMat = new THREE.MeshStandardMaterial({ color: 0xe63946, roughness: 0.4, metalness: 0.3 });
+            const neutronMat = new THREE.MeshStandardMaterial({ color: 0xadb5bd, roughness: 0.4, metalness: 0.3 });
+            const nucleusRadius = Math.cbrt(numProtons + numNeutrons) * 0.3;
+            const getRandomPointInSphere = r => {
+                const u = Math.random(), v = Math.random(), theta = 2 * Math.PI * u, phi = Math.acos(2 * v - 1), rad = Math.cbrt(Math.random()) * r;
+                return new THREE.Vector3(rad * Math.sin(phi) * Math.cos(theta), rad * Math.sin(phi) * Math.sin(theta), rad * Math.cos(phi));
+            };
+            const nucleusGroup = new THREE.Group();
+            atomGroup.add(nucleusGroup);
+            // Floating label for nucleus
+            addFloatingLabel(nucleusGroup, 'Nucleus', new THREE.Vector3(0, 0.7, 0));
+            if (numProtons > 0) {
+                addFloatingLabel(nucleusGroup, 'Proton', new THREE.Vector3(0.7, 0.3, 0));
+            }
+            if (numNeutrons > 0) {
+                addFloatingLabel(nucleusGroup, 'Neutron', new THREE.Vector3(-0.7, -0.3, 0));
+            }
+            for (let i = 0; i < numProtons; i++) {
+                const proton = new THREE.Mesh(protonGeo, protonMat.clone());
+                proton.position.copy(getRandomPointInSphere(nucleusRadius));
+                proton.userData = { type: 'proton' };
+                nucleusGroup.add(proton);
+                nucleons.push({ mesh: proton, basePos: proton.position.clone() });
+            }
+            for (let i = 0; i < numNeutrons; i++) {
+                const neutron = new THREE.Mesh(neutronGeo, neutronMat.clone());
+                neutron.position.copy(getRandomPointInSphere(nucleusRadius));
+                neutron.userData = { type: 'neutron' };
+                nucleusGroup.add(neutron);
+                nucleons.push({ mesh: neutron, basePos: neutron.position.clone() });
+            }
+            protonGeo.dispose();
+            neutronGeo.dispose();
+        }
+
+        function createElectronShells(shellData) {
+            const electronGeo = new THREE.SphereGeometry(0.15, 16, 16);
+            const electronMat = new THREE.MeshStandardMaterial({ color: 0x48cae4, emissive: 0x48cae4, emissiveIntensity: 0.6, roughness: 0.2, metalness: 0.8 });
+            const shellMat = new THREE.MeshBasicMaterial({ color: 0x48cae4, side: THREE.DoubleSide, transparent: true, opacity: 0.08 });
+            shellData.forEach((numElectrons, shellIndex) => {
+                const radius = (shellIndex + 1) * 3.5 + 1;
+                // Add shell highlight animation group
+                const shellGroup = new THREE.Group();
+                atomGroup.add(shellGroup);
+                // Shell mesh (faint sphere)
+                const shellGeo = new THREE.SphereGeometry(radius, 32, 32);
+                const shellMesh = new THREE.Mesh(shellGeo, shellMat.clone());
+                shellMesh.userData.type = 'shell';
+                shellMesh.userData.shellIndex = shellIndex;
+                shellGroup.add(shellMesh);
+                // Floating label for shell only
+                addFloatingLabel(shellGroup, `Shell ${shellIndex + 1}`, new THREE.Vector3(0, radius + 0.5, 0));
+                // Electron trails (orbit path)
+                const trailPoints = [];
+                for (let t = 0; t <= 64; t++) {
+                    const theta = (t / 64) * Math.PI * 2;
+                    trailPoints.push(new THREE.Vector3(radius * Math.cos(theta), radius * Math.sin(theta), 0));
+                }
+                const trailGeo = new THREE.BufferGeometry().setFromPoints(trailPoints);
+                const trailMat = new THREE.LineBasicMaterial({ color: 0x48cae4, opacity: 0.3, transparent: true });
+                const trail = new THREE.Line(trailGeo, trailMat);
+                shellGroup.add(trail);
+                // Add electrons
+                for (let i = 0; i < numElectrons; i++) {
+                    const electron = new THREE.Mesh(electronGeo, electronMat.clone());
+                    electron.userData = { type: 'electron', shellIndex };
+                    electrons.push({ mesh: electron, radius: radius, speed: (1.2 / (shellIndex * 0.5 + 1)) + (Math.random() - 0.5) * 0.1, offset: Math.random() * Math.PI * 2, orbitPlane: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI) });
+                    shellGroup.add(electron);
+                    // REMOVE: do not add floating label for individual electrons
+                }
+                // Shell highlight on click
+                shellMesh.callback = () => highlightShell(shellGroup);
+            });
+            electronGeo.dispose();
+            electronMat.dispose();
+            shellMat.dispose();
+        }
+
+        // --- INTERACTIVITY ---
+        // --- Electron Info Popup Button ---
+        // --- Expensive Animated Menu UI ---
+        function createExpensiveMenu() {
+            // --- Buy Me a Coffee Popup Injection ---
+            if (!document.getElementById('donate-popup')) {
+                const donatePopup = document.createElement('div');
+                donatePopup.id = 'donate-popup';
+                donatePopup.style.position = 'fixed';
+                donatePopup.style.bottom = '38px';
+                donatePopup.style.right = '38px';
+                donatePopup.style.zIndex = '9999';
+                donatePopup.style.background = 'linear-gradient(135deg,#48cae4 60%,#ffde59 100%)';
+                donatePopup.style.border = '4px solid #fff200';
+                donatePopup.style.borderRadius = '32px';
+                donatePopup.style.boxShadow = '0 0 48px #48cae4a0, 0 0 0 8px #fff200a0 inset, 0 0 32px #ffde59a0';
+                donatePopup.style.padding = '32px 38px 32px 38px';
+                donatePopup.style.display = 'flex';
+                donatePopup.style.flexDirection = 'column';
+                donatePopup.style.alignItems = 'center';
+                donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';
+                donatePopup.style.cursor = 'pointer';
+                donatePopup.innerHTML = `
+                  <div style="font-size:32px;font-weight:900;color:#fff200;text-shadow:0 0 18px #48cae4a0,0 0 8px #fff200;letter-spacing:1px;margin-bottom:10px;animation:donatePulse 1.2s infinite alternate;">☕ Support This Project!</div>
+                  <div style="font-size:20px;color:#1a2233;font-weight:600;margin-bottom:18px;text-align:center;max-width:320px;">If you love this interactive science tool, please consider <span style='color:#48cae4;font-weight:700;'>buying me a coffee</span> to help keep it free and growing!<br><span style='font-size:16px;color:#ff3c7e;font-weight:700;'>Your support means the world! 💖</span></div>
+                  <button id="donate-btn" style="font-size:22px;font-weight:800;padding:16px 38px;background:linear-gradient(90deg,#ffde59 60%,#48cae4 100%);color:#1a2233;border:none;border-radius:18px;box-shadow:0 0 18px #48cae4a0,0 0 8px #fff200;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;animation:donateBtnBounce 1.5s infinite alternate;">☕ Buy Me a Coffee</button>
+                  <span id="donate-close" style="position:absolute;top:10px;right:18px;font-size:28px;color:#1a2233;cursor:pointer;font-weight:900;opacity:0.7;">×</span>
+                `;
+                donatePopup.onmouseenter = () => donatePopup.style.transform = 'scale(1.04) rotate(-1deg)';
+                donatePopup.onmouseleave = () => donatePopup.style.transform = '';
+                document.body.appendChild(donatePopup);
+                // Animate in
+                setTimeout(()=>{donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';}, 100);
+                // Button click
+                donatePopup.querySelector('#donate-btn').onclick = (e) => {
+                  e.stopPropagation();
+                  window.open('https://buymeacoffee.com/rorrimaesu','_blank');
+                  donatePopup.style.animation = 'donatePopOut 0.7s';
+                  setTimeout(()=>donatePopup.style.display='none',650);
+                };
+                // Close button
+                donatePopup.querySelector('#donate-close').onclick = (e) => {
+                  e.stopPropagation();
+                  donatePopup.style.animation = 'donatePopOut 0.7s';
+                  setTimeout(()=>donatePopup.style.display='none',650);
+                };
+                // Reappear after 90s if not clicked
+                setTimeout(()=>{
+                  if (donatePopup.style.display!=='none') return;
+                  donatePopup.style.display='flex';
+                  donatePopup.style.animation = 'donatePopIn 1.2s cubic-bezier(.68,-0.55,.27,1.55)';
+                },90000);
+                // Add keyframes
+                const style = document.createElement('style');
+                style.innerHTML = `
+                  @keyframes donatePopIn {
+                    0% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
+                    60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+                    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+                  }
+                  @keyframes donatePopOut {
+                    0% { transform: scale(1) rotate(0deg); opacity: 1; }
+                    100% { transform: scale(0.2) rotate(30deg); opacity: 0; }
+                  }
+                  @keyframes donatePulse {
+                    0% { text-shadow: 0 0 18px #48cae4a0,0 0 8px #fff200; }
+                    100% { text-shadow: 0 0 38px #ffde59,0 0 18px #48cae4; }
+                  }
+                  @keyframes donateBtnBounce {
+                    0% { transform: scale(1) translateY(0); }
+                    100% { transform: scale(1.08) translateY(-8px); }
+                  }
+                `;
+                document.head.appendChild(style);
+            }
+            // ...existing code...
+            if (document.getElementById('expensive-menu')) return;
+            // Menu button (quantum icon)
+            const menuBtn = document.createElement('div');
+            menuBtn.id = 'expensive-menu-btn';
+            menuBtn.innerHTML = `<svg width="44" height="44" viewBox="0 0 44 44" style="filter:drop-shadow(0 0 12px #48cae4);"><circle cx="22" cy="22" r="18" fill="url(#g)" stroke="#48cae4" stroke-width="2"/><g><ellipse cx="22" cy="22" rx="12" ry="5" fill="none" stroke="#48cae4" stroke-width="2"/><ellipse cx="22" cy="22" rx="5" ry="12" fill="none" stroke="#48cae4" stroke-width="2" transform="rotate(60 22 22)"/><ellipse cx="22" cy="22" rx="5" ry="12" fill="none" stroke="#48cae4" stroke-width="2" transform="rotate(-60 22 22)"/></g><defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#48cae4"/><stop offset="100%" stop-color="#1a2233"/></radialGradient></defs></svg>`;
+            menuBtn.style.position = 'fixed';
+            menuBtn.style.top = '32px';
+            menuBtn.style.right = '38px';
+            menuBtn.style.zIndex = '300';
+            menuBtn.style.cursor = 'pointer';
+            menuBtn.style.transition = 'transform 0.3s cubic-bezier(.68,-0.55,.27,1.55)';
+            menuBtn.onmouseenter = () => menuBtn.style.transform = 'scale(1.15)';
+            menuBtn.onmouseleave = () => menuBtn.style.transform = '';
+            document.body.appendChild(menuBtn);
+
+            // Menu panel
+            const menuPanel = document.createElement('div');
+            menuPanel.id = 'expensive-menu';
+            menuPanel.style.position = 'fixed';
+            menuPanel.style.top = '24px';
+            menuPanel.style.right = '32px';
+            menuPanel.style.width = '340px';
+            menuPanel.style.maxWidth = '90vw';
+            menuPanel.style.background = 'rgba(20,30,50,0.92)';
+            menuPanel.style.border = '2px solid #48cae4';
+            menuPanel.style.borderRadius = '24px';
+            menuPanel.style.boxShadow = '0 0 48px #48cae4a0, 0 0 0 8px #1a2233a0 inset';
+            menuPanel.style.backdropFilter = 'blur(18px)';
+            menuPanel.style.padding = '38px 32px 32px 32px';
+            menuPanel.style.zIndex = '350';
+            menuPanel.style.display = 'none';
+            menuPanel.style.flexDirection = 'column';
+            menuPanel.style.gap = '22px';
+            menuPanel.style.animation = '';
+            menuPanel.innerHTML = `
+                <div style="font-size:28px;font-weight:700;color:#48cae4;text-shadow:0 0 18px #48cae4a0;letter-spacing:1px;margin-bottom:18px;">Quantum Menu</div>
+                <div class="menu-item" data-link="atom">🔬 Atom Explorer</div>
+                <div class="menu-item" data-link="electron">⚡ Electron Explorer</div>
+                <div class="menu-item" data-link="lab">🧪 Chemistry Lab</div>
+                <div class="menu-item" data-link="tour">🧭 Guided Tour</div>
+                <div class="menu-item" data-link="settings">⚙️ Settings</div>
+                <div class="menu-item" data-link="about">📚 About</div>
+            `;
+            document.body.appendChild(menuPanel);
+
+            // Particle background animation (canvas)
+            const particleCanvas = document.createElement('canvas');
+            particleCanvas.width = 340;
+            particleCanvas.height = 420;
+            particleCanvas.style.position = 'absolute';
+            particleCanvas.style.top = '0';
+            particleCanvas.style.left = '0';
+            particleCanvas.style.width = '100%';
+            particleCanvas.style.height = '100%';
+            particleCanvas.style.pointerEvents = 'none';
+            particleCanvas.style.zIndex = '0';
+            menuPanel.appendChild(particleCanvas);
+            // Animate particles
+            let particles = Array.from({length: 38}, () => ({x: Math.random()*340, y: Math.random()*420, r: Math.random()*2+1, dx: (Math.random()-0.5)*0.7, dy: (Math.random()-0.5)*0.7, hue: Math.random()*360}));
+            function drawParticles() {
+                const ctx = particleCanvas.getContext('2d');
+                ctx.clearRect(0,0,340,420);
+                for (const p of particles) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.18 + Math.abs(Math.sin(Date.now()/700+p.x))*0.12;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    ctx.fillStyle = `hsl(${p.hue},80%,60%)`;
+                    ctx.shadowColor = `hsl(${p.hue},80%,60%)`;
+                    ctx.shadowBlur = 12;
+                    ctx.fill();
+                    ctx.restore();
+                    p.x += p.dx; p.y += p.dy;
+                    if (p.x<0||p.x>340) p.dx*=-1;
+                    if (p.y<0||p.y>420) p.dy*=-1;
+                }
+                requestAnimationFrame(drawParticles);
+            }
+            drawParticles();
+
+            // Menu open/close logic
+            menuBtn.onclick = () => {
+                menuPanel.style.display = menuPanel.style.display==='none'?'flex':'none';
+                menuPanel.style.animation = menuPanel.style.display==='flex'?'menuOpen 0.5s cubic-bezier(.68,-0.55,.27,1.55)':'menuClose 0.4s';
+            };
+
+            // Menu item animation and navigation
+            Array.from(menuPanel.getElementsByClassName('menu-item')).forEach(item => {
+                item.style.fontSize = '20px';
+                item.style.fontWeight = '600';
+                item.style.color = '#e0e0e0';
+                item.style.padding = '12px 18px';
+                item.style.borderRadius = '12px';
+                item.style.marginBottom = '6px';
+                item.style.cursor = 'pointer';
+                item.style.transition = 'background 0.2s, color 0.2s, box-shadow 0.3s, transform 0.2s';
+                item.onmouseenter = () => {
+                    item.style.background = 'linear-gradient(90deg,#48cae4 60%,#1a2233 100%)';
+                    item.style.color = '#fff';
+                    item.style.boxShadow = '0 0 18px #48cae4a0';
+                    item.style.transform = 'scale(1.08)';
+                };
+                item.onmouseleave = () => {
+                    item.style.background = '';
+                    item.style.color = '#e0e0e0';
+                    item.style.boxShadow = '';
+                    item.style.transform = '';
+                };
+                item.onclick = () => {
+                    menuPanel.style.display = 'none';
+                    if (item.dataset.link==='home') window.location.href='index.html';
+                    if (item.dataset.link==='atom') window.location.href='index.html';
+                    if (item.dataset.link==='electron') window.location.href='electron.html';
+                    if (item.dataset.link==='lab') window.location.href='lab.html';
+                    if (item.dataset.link==='tour') alert('Guided Tour coming soon!');
+                    if (item.dataset.link==='settings') alert('Settings coming soon!');
+                    if (item.dataset.link==='about') alert('Interactive Atom Visualizer\nCreated by Science Nerds.\nPowered by Quantum Canvas.');
+                };
+            });
+
+            // Responsive: shrink for mobile
+            function updateMenuLayout() {
+                if (window.innerWidth < 600) {
+                    menuPanel.style.width = '98vw';
+                    menuPanel.style.padding = '24px 8vw 24px 8vw';
+                    menuBtn.style.right = '12px';
+                    menuBtn.style.top = '12px';
                 } else {
-                    if (state.keyState['KeyW']) cannon.position.addScaledVector(forward, moveSpeed);
-                    if (state.keyState['KeyS']) cannon.position.addScaledVector(forward, -moveSpeed);
-                    if (state.keyState['KeyA']) cannon.position.addScaledVector(right, -moveSpeed);
-                    if (state.keyState['KeyD']) cannon.position.addScaledVector(right, moveSpeed);
+                    menuPanel.style.width = '340px';
+                    menuPanel.style.padding = '38px 32px 32px 32px';
+                    menuBtn.style.right = '38px';
+                    menuBtn.style.top = '32px';
                 }
             }
+            window.addEventListener('resize', updateMenuLayout);
+            updateMenuLayout();
+        }
+        // Call this after atom loads
+        createExpensiveMenu();
+        function onCanvasClick(event) {
+            if (tourActive || !atomGroup) return;
+            const mouse = new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(atomGroup.children, true);
+            let newSelection = null;
+            if (intersects.length > 0) {
+                const object = intersects[0].object;
+                if (object.userData.type && ['proton', 'neutron', 'electron'].includes(object.userData.type)) {
+                    newSelection = object;
+                }
+                // Shell highlight on click
+                if (object.userData.type === 'shell' && object.callback) {
+                    object.callback();
+                }
+                // Electron click: show 3D electron model and info panel
+                if (object.userData.type === 'electron') {
+                    showElectronKeyPanel();
+                }
+            }
+            selectObject(newSelection);
+        // --- Electron Key Panel ---
+        function showElectronKeyPanel() {
+            // Remove previous key panel if present
+            let oldPanel = document.getElementById('electron-key-panel');
+            if (oldPanel) oldPanel.remove();
+            // Create panel
+            const panel = document.createElement('div');
+            panel.id = 'electron-key-panel';
+            panel.style.position = 'absolute';
+            panel.style.right = '30px';
+            panel.style.top = '50%';
+            panel.style.transform = 'translateY(-50%)';
+            panel.style.background = 'rgba(20,30,50,0.95)';
+            panel.style.border = '1px solid #48cae4';
+            panel.style.borderRadius = '12px';
+            panel.style.padding = '28px 24px 24px 24px';
+            panel.style.zIndex = '200';
+            panel.style.color = '#e0e0e0';
+            panel.style.width = '320px';
+            panel.innerHTML = `<h2 style="color:#48cae4;margin-top:0;">Electron</h2>
+                <div id="electron-3d-container" style="width:220px;height:220px;margin:0 auto 18px auto;background:rgba(10,20,40,0.7);border-radius:50%;box-shadow:0 0 24px #48cae4 inset;"></div>
+                <p style="font-size:15px;line-height:1.5;">Electrons are fundamental particles with a negative charge. Their true nature is a quantum probability cloud, not a simple dot. The model shown is a fuzzy sphere representing the region where the electron is most likely to be found.</p>
+                <ul style="font-size:14px;margin-top:10px;">
+                  <li><b>Charge:</b> -1e</li>
+                  <li><b>Mass:</b> 9.11 × 10<sup>-31</sup> kg</li>
+                  <li><b>Spin:</b> 1/2</li>
+                  <li><b>Location:</b> Orbiting nucleus in shells</li>
+                </ul>`;
+            document.body.appendChild(panel);
+            renderElectron3DModel('electron-3d-container');
         }
 
-        setCameraMode('cinematic');
-        updateObjectCount();
-        updateMassEditor();
-        updateAmmoUI();
-        animate();
-    </script>
-    <script id="vertexshader" type="x-shader/x-vertex">
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        // --- Render 3D Electron Model ---
+        function renderElectron3DModel(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            // Remove previous canvas if present
+            while (container.firstChild) container.removeChild(container.firstChild);
+            // Create renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(220, 220);
+            container.appendChild(renderer.domElement);
+            // Create scene
+            const scene = new THREE.Scene();
+            scene.background = null;
+            // Camera
+            const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            camera.position.set(0, 0, 3.5);
+            // Fuzzy sphere (probability cloud)
+            const points = [];
+            for (let i = 0; i < 1200; i++) {
+                const r = 0.9 + Math.random() * 0.25;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                points.push(new THREE.Vector3(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.sin(phi) * Math.sin(theta),
+                    r * Math.cos(phi)
+                ));
+            }
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.PointsMaterial({ color: 0x48cae4, size: 0.09, opacity: 0.7, transparent: true });
+            const cloud = new THREE.Points(geometry, material);
+            scene.add(cloud);
+            // Central sphere (core)
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 32, 32),
+                new THREE.MeshStandardMaterial({ color: 0x48cae4, emissive: 0x48cae4, emissiveIntensity: 0.7, roughness: 0.2, metalness: 0.8, transparent: true, opacity: 0.85 })
+            );
+            scene.add(core);
+            // Lighting
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const pointLight = new THREE.PointLight(0x48cae4, 1.2, 10);
+            pointLight.position.set(2, 2, 3);
+            scene.add(pointLight);
+            // Animation
+            function animateElectronModel() {
+                core.rotation.y += 0.01;
+                cloud.rotation.y += 0.008;
+                renderer.render(scene, camera);
+                requestAnimationFrame(animateElectronModel);
+            }
+            animateElectronModel();
         }
-    </script>
-    <script id="fragmentshader" type="x-shader/x-fragment">
-        uniform sampler2D baseTexture;
-        uniform sampler2D bloomTexture;
-        varying vec2 vUv;
-        void main() {
-            gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
         }
+
+        function selectObject(object) {
+            // Deselect previous object
+            if (selectedObject && selectedObject.material && selectedObject.material.emissive) {
+                selectedObject.material.emissive.setHex(selectedObject.userData.originalEmissive);
+            }
+            if (object && object !== selectedObject) {
+                selectedObject = object;
+                // Store original emissive color and highlight
+                if (object.material && object.material.emissive) {
+                    object.userData.originalEmissive = object.material.emissive.getHex();
+                    object.material.emissive.setHex(0xffffff);
+                }
+                const details = particleDetails[object.userData.type];
+                let extra = '';
+                if (object.userData.type === 'electron') {
+                    extra = `<p>Shell: ${object.userData.shellIndex + 1}</p>`;
+                }
+                particleInfo.innerHTML = `<h3>${details.title}</h3><p>${details.text}</p>${extra}`;
+                particleInfo.style.display = 'block';
+                setTimeout(() => particleInfo.style.opacity = '1', 10);
+            } else {
+                selectedObject = null;
+                particleInfo.style.opacity = '0';
+                setTimeout(() => particleInfo.style.display = 'none', 500);
+            }
+        }
+
+        // --- GUIDED TOUR ---
+        function startTour() {
+            endTour();
+            tourActive = true;
+            tourStep = 0;
+            tourButton.textContent = "End Tour";
+            selectObject(null);
+            showNextTip();
+        }
+        function endTour() {
+            tourActive = false;
+            tourButton.textContent = "Start Guided Tour";
+            clearTimeout(tourTimeout);
+            document.querySelectorAll('.tour-tip').forEach(tip => tip.remove());
+        }
+
+        function showNextTip() {
+            document.querySelectorAll('.tour-tip').forEach(tip => tip.remove());
+            if (!tourActive) return;
+            const tourSteps = [
+                { name: "proton", text: "The nucleus contains positive <strong>Protons</strong> (red). Their count defines the element." },
+                { name: "neutron", text: "It also contains neutral <strong>Neutrons</strong> (gray), which add mass and stabilize the nucleus." },
+                { name: "electron", text: "Negative <strong>Electrons</strong> (blue) orbit the nucleus in probability clouds called shells." },
+                { name: "shell", text: "These <strong>Electron Shells</strong> represent different energy levels. You can now explore freely." }
+            ];
+            if (tourStep >= tourSteps.length) {
+                endTour();
+                return;
+            }
+            const step = tourSteps[tourStep];
+            let targetObject;
+            if(atomGroup) {
+                atomGroup.traverse(child => {
+                    if (!targetObject && child.userData.type === step.name) targetObject = child;
+                });
+            }
+            if (targetObject) {
+                const tipElement = document.createElement('div');
+                tipElement.className = 'tour-tip';
+                tipElement.innerHTML = step.text;
+                canvasContainer.appendChild(tipElement);
+                positionTip(tipElement, targetObject);
+                setTimeout(() => {
+                    tipElement.style.opacity = '1';
+                    tipElement.style.transform = 'scale(1)';
+                }, 100);
+            }
+            tourTimeout = setTimeout(() => { tourStep++; showNextTip(); }, 5000);
+        }
+
+        function positionTip(tipElement, targetObject) {
+            const vector = new THREE.Vector3();
+            targetObject.getWorldPosition(vector);
+            vector.project(camera);
+            const x = (vector.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+            const y = (vector.y * -0.5 + 0.5) * renderer.domElement.clientHeight;
+            tipElement.style.left = `${x + 15}px`;
+            tipElement.style.top = `${y + 15}px`;
+        }
+
+        // --- CORE ANIMATION & RESIZE ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            TWEEN.update(time);
+            if (atomGroup) {
+                electrons.forEach(e => {
+                    // Animate electron orbits
+                    let angle = elapsedTime * e.speed + e.offset;
+                    let pos = new THREE.Vector3(e.radius * Math.cos(angle), e.radius * Math.sin(angle), 0);
+                    e.orbitPlane.x += 0.0005 * e.speed;
+                    e.orbitPlane.y += 0.001 * e.speed;
+                    pos.applyEuler(e.orbitPlane);
+                    // Quantum jump animation (simulate shell transition)
+                    if (e.mesh.userData && e.mesh.userData.quantumJump) {
+                        let jumpProgress = Math.min(1, (elapsedTime - e.mesh.userData.lastJump) / 0.7);
+                        let jumpRadius = e.radius + (e.mesh.userData.jumpTargetRadius - e.radius) * jumpProgress;
+                        pos = new THREE.Vector3(jumpRadius * Math.cos(angle), jumpRadius * Math.sin(angle), 0);
+                        pos.applyEuler(e.orbitPlane);
+                        if (jumpProgress >= 1) {
+                            e.radius = e.mesh.userData.jumpTargetRadius;
+                            e.mesh.userData.quantumJump = false;
+                        }
+                    }
+                    e.mesh.position.copy(pos);
+                    // Animate electron trail color and opacity
+                    if (e.trail && e.trail.material) {
+                        e.trail.material.opacity = 0.15 + 0.15 * Math.abs(Math.sin(elapsedTime * 2 + e.shellIndex));
+                        let color = new THREE.Color(0x48cae4).lerp(new THREE.Color(0xffffff), 0.5 * Math.abs(Math.sin(elapsedTime + e.shellIndex)));
+                        e.trail.material.color.copy(color);
+                    }
+                    // Animate shell mesh pulse
+                    if (e.shellMesh && e.shellMesh.material) {
+                        e.shellMesh.material.opacity = 0.08 + 0.04 * Math.abs(Math.sin(elapsedTime * 2 + e.shellIndex));
+                    }
+                });
+                nucleons.forEach(n => {
+                    n.mesh.position.x = n.basePos.x + (Math.sin(elapsedTime * 2 + n.basePos.x)) * 0.02;
+                    n.mesh.position.y = n.basePos.y + (Math.cos(elapsedTime * 2 + n.basePos.y)) * 0.02;
+                });
+            }
+            // Animate shell highlight
+            if (window._highlightedShell) {
+                window._highlightedShell.children.forEach(child => {
+                    if (child.userData.type === 'shell') {
+                        child.material.opacity = 0.25 + 0.15 * Math.sin(elapsedTime * 4);
+                    }
+                });
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        // --- Floating Labels ---
+        function addFloatingLabel(target, text, offset) {
+            // Create a DOM label
+            const label = document.createElement('div');
+            label.className = 'floating-label';
+            label.textContent = text;
+            label.style.position = 'absolute';
+            label.style.pointerEvents = 'none';
+            label.style.background = 'rgba(30,30,50,0.85)';
+            label.style.color = '#48cae4';
+            label.style.padding = '2px 8px';
+            label.style.borderRadius = '6px';
+            label.style.fontSize = '13px';
+            label.style.fontWeight = 'bold';
+            label.style.zIndex = '120';
+            label.style.opacity = '0.85';
+            canvasContainer.appendChild(label);
+            // Update label position each frame
+            function updateLabel() {
+                let pos;
+                if (target instanceof THREE.Object3D) {
+                    if (target instanceof THREE.Mesh) {
+                        pos = target.getWorldPosition(new THREE.Vector3()).clone().add(offset);
+                    } else {
+                        pos = target.position.clone().add(offset);
+                        target.localToWorld(pos);
+                    }
+                } else {
+                    pos = offset.clone();
+                }
+                pos.project(camera);
+                const x = (pos.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+                const y = (pos.y * -0.5 + 0.5) * renderer.domElement.clientHeight;
+                label.style.left = `${x}px`;
+                label.style.top = `${y}px`;
+            }
+            // Animation loop for label
+            function animateLabel() {
+                updateLabel();
+                if (label.parentNode) requestAnimationFrame(animateLabel);
+            }
+            animateLabel();
+        }
+
+        // --- Shell Highlight Animation ---
+        function highlightShell(shellGroup) {
+            window._highlightedShell = shellGroup;
+            setTimeout(() => {
+                if (window._highlightedShell === shellGroup) window._highlightedShell = null;
+            }, 2000);
+        }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            animate();
+        });
+
+        // Minimal TWEEN.js
+        const TWEEN = { _tweens: [], update: function(t) { if (this._tweens.length === 0) return false; let i = 0; t = t !== undefined ? t : performance.now(); while (i < this._tweens.length) { if (this._tweens[i].update(t)) i++; else this._tweens.splice(i, 1); } return true; }, Tween: function(o) { this._object = o; this._valuesStart = {}; this._valuesEnd = {}; this._duration = 1e3; this._easingFunction = TWEEN.Easing.Linear.None; this._startTime = null; this._onUpdateCallback = null; this._onCompleteCallback = null; TWEEN._tweens.push(this); } };
+        TWEEN.Tween.prototype = { to: function(p, d) { this._valuesEnd = p; if (d !== undefined) this._duration = d; return this; }, start: function(t) { this._startTime = t !== undefined ? t : performance.now(); for (var p in this._valuesEnd) this._valuesStart[p] = this._object[p]; return this; }, easing: function(e) { this._easingFunction = e; return this; }, onUpdate: function(c) { this._onUpdateCallback = c; return this; }, onComplete: function(c) { this._onCompleteCallback = c; return this; }, update: function(t) { if (t < this._startTime) return true; let e = (t - this._startTime) / this._duration; e = e > 1 ? 1 : e; let v = this._easingFunction(e); for (var p in this._valuesEnd) { let s = this._valuesStart[p], n = this._valuesEnd[p]; this._object[p] = s + (n - s) * v; } if (this._onUpdateCallback !== null) this._onUpdateCallback.call(this._object, v); if (e === 1) { if (this._onCompleteCallback !== null) this._onCompleteCallback.call(this._object); return false; } return true; } };
+        TWEEN.Easing = { Linear: { None: function(k) { return k; } }, Cubic: { Out: function(k) { return --k * k * k + 1; } } };
     </script>
 </body>
 </html>

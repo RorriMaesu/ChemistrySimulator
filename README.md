@@ -1,50 +1,32 @@
-# BlackHoleSimulatorGame
+# Chemistry Simulator
 
-Welcome to **BlackHoleSimulatorGame**!
-
-This is an interactive cosmic sandbox simulation built with [Three.js](https://threejs.org/) and modern web technologies. You can launch planets, stars, and black holes, edit their masses, and watch them interact under realistic gravity physics. The simulation features cinematic and aiming camera modes, mobile controls, and visually stunning accretion disks and starfields.
+Welcome to the Chemistry Simulator! This interactive science tool lets you explore atoms, electrons, and chemical reactions in a visually stunning and educational way. Dive into the Atom Explorer, Electron Explorer, and Chemistry Lab to learn, experiment, and have fun with the building blocks of the universe.
 
 ## Features
-- Launch different celestial objects (planets, stars, black holes)
-- Realistic gravity physics and object interactions
-- Cinematic and aiming camera modes
-- Mobile-friendly controls (joysticks, fire button)
-- Object mass editor
-- Accretion disks and starfield backgrounds
-- Responsive UI with Tailwind CSS
+- **Atom Explorer:** Visualize atomic structure and quantum numbers interactively.
+- **Electron Explorer:** See electron orbitals and quantum effects in 3D.
+- **Chemistry Lab:** Mix elements, create molecules, and discover chemical reactions.
+- **Modern UI:** Beautiful, animated, and responsive design for all devices.
+- **Educational:** Built-in guided tour, info popups, and quantum explanations.
 
-## How to Run
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/RorriMaesu/BlackHoleSimulatorGame.git
-   ```
-2. Open `index.html` in your browser.
+## Screenshots
+![Chemistry Lab Screenshot](https://raw.githubusercontent.com/RorriMaesu/ChemistrySimulator/main/screenshot.png)
 
-## Controls
-- **Desktop:**
-  - Click simulation to aim
-  - WASD to move cannon
-  - Mouse to aim
-  - Click to fire
-  - Use sliders and selectors to adjust gravity, power, and projectile type
-- **Mobile:**
-  - Use on-screen joysticks to move and aim
-  - Tap "FIRE" to launch
+## Try It Out
+Clone or download this repository and open `index.html` in your browser. No installation required!
 
-## Technologies Used
-- [Three.js](https://threejs.org/) for 3D rendering
-- [Tailwind CSS](https://tailwindcss.com/) for UI styling
-- Vanilla JavaScript for game logic
+## Support This Project
+<div align="center">
+  <a href="https://buymeacoffee.com/rorrimaesu" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="300" style="margin-bottom:16px;box-shadow:0 0 24px #ffde59;" />
+  </a>
+  <br>
+  <b>If you love this interactive science tool, please consider <a href="https://buymeacoffee.com/rorrimaesu" target="_blank">buying me a coffee</a> to help keep it free and growing!<br>Your support means the world! 💖</b>
+</div>
 
 ## License
-MIT
+MIT License
 
 ---
+
 Created by [RorriMaesu](https://github.com/RorriMaesu)
-  
-## GitHub Pages
-This project is ready for GitHub Pages. After pushing to your repository, your site will be available at:
-```
-https://rorrimaesu.github.io/BlackHoleSimulatorGame/
-```
-Just open `index.html` in your browser, or visit the link above after enabling GitHub Pages in your repository settings.
