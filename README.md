@@ -9,8 +9,6 @@ Welcome to the **Black Hole Simulator & Quantum Atom Explorer**! This interactiv
 - **Modern UI:** Beautiful, animated interface with responsive design.
 - **Guided Tour, Settings, and About:** Learn more about the science and the app.
 
-## Screenshots
-![App Screenshot](https://user-images.githubusercontent.com/placeholder/quantum-lab-demo.png)
 
 ## Try It Out
 Just open `index.html` in your browser, or any of the main pages:
