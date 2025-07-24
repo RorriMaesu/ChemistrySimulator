@@ -28,7 +28,7 @@ Just open `index.html` in your browser, or any of the main pages:
 <div align="center">
   <strong style="font-size:2em;">⬇️⬇️⬇️</strong><br>
   <a href="https://buymeacoffee.com/rorrimaesu" target="_blank">
-    <img src="https://cdn.buymeacoffee.com/buttons/v2/animated-yellow.gif" alt="Buy Me A Coffee" width="340" />
+    <img src="donation_image.png" alt="Buy Me A Coffee" width="340" />
   </a>
   <br>
   <strong style="font-size:1.3em;">✨ Click the coffee cup above to donate instantly! ✨</strong>
