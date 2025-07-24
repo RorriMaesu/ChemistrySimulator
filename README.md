@@ -21,26 +21,19 @@ Just open `index.html` in your browser, or any of the main pages:
 ---
 
 
-## <span style="font-size:2em;">☕ Support This Project!</span>
+
+
+## ❤️‍🔥 Help Keep This Project Free! ❤️‍🔥
 
 <div align="center">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/animated-yellow.gif" alt="Animated Coffee" width="80" style="margin-bottom: -18px; filter: drop-shadow(0 0 18px #ffde59); animation: pulse 1.2s infinite alternate;" />
-</div>
-
-<div align="center" style="font-size:1.25em; font-weight:700; color:#1a2233; margin: 18px 0 10px 0; line-height:1.5;">
-  <span style="color:#48cae4; font-weight:900; text-shadow:0 0 8px #48cae4;">Love this interactive science tool?</span><br>
-  <span style="color:#ff3c7e; font-weight:900; text-shadow:0 0 8px #ff3c7e;">Help keep it free and growing!</span><br>
-  <span style="color:#fff200; font-weight:900; text-shadow:0 0 8px #fff200;">Your support means the world! 💖</span>
-</div>
-
-<div align="center" style="margin: 18px 0;">
+  <strong style="font-size:2em;">⬇️⬇️⬇️</strong><br>
   <a href="https://buymeacoffee.com/rorrimaesu" target="_blank">
-    <img src="https://cdn.buymeacoffee.com/buttons/v2/animated-yellow.gif" alt="Buy Me A Coffee" width="300" style="border-radius: 22px; box-shadow: 0 0 28px #48cae4a0, 0 0 12px #fff200, 0 0 18px #ffde59; animation: donateBtnBounce 1.5s infinite alternate; filter: drop-shadow(0 0 8px #ffde59);" />
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/animated-yellow.gif" alt="Buy Me A Coffee" width="340" />
   </a>
-</div>
-
-<div align="center" style="font-size:1.1em; color:#1a2233; font-weight:600; margin-bottom: 18px;">
-  <em>Click the coffee cup above to donate instantly!</em>
+  <br>
+  <strong style="font-size:1.3em;">✨ Click the coffee cup above to donate instantly! ✨</strong>
+  <br>
+  <em>Your support keeps this project alive and free for everyone. Thank you! 💖</em>
 </div>
 
 ---
