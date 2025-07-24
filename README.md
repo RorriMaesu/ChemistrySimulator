@@ -1,6 +1,6 @@
-# Black Hole Simulator & Quantum Atom Explorer
+# Quantum Atom Explorer
 
-Welcome to the **Black Hole Simulator & Quantum Atom Explorer**! This interactive science tool lets you explore the quantum world of atoms, electrons, and chemistry in a visually stunning and educational way.
+Welcome to the **Quantum Atom Explorer**! This interactive science tool lets you explore the quantum world of atoms, electrons, and chemistry in a visually stunning and educational way.
 
 ## Features
 - **Atom Explorer:** Visualize atomic structure and quantum numbers interactively.
